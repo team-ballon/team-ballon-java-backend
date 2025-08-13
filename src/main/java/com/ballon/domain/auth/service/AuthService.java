@@ -4,6 +4,7 @@ import com.ballon.domain.auth.dto.JwtResponse;
 import com.ballon.domain.auth.dto.LoginRequest;
 import com.ballon.domain.auth.entity.RefreshToken;
 import com.ballon.domain.auth.repository.RefreshTokenRepository;
+import com.ballon.domain.partner.repository.PartnerRepository;
 import com.ballon.domain.user.entity.User;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.exception.UserNotFoundException;
@@ -23,12 +24,13 @@ import java.util.Optional;
 @Transactional
 public class AuthService {
     private final UserRepository userRepository;
+    private final PartnerRepository partnerRepository;
     private final JwtTokenUtil jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
 
     public JwtResponse login(LoginRequest loginRequest) {
-        User user = userRepository.findByEmailAndIsActiveIsTrue(loginRequest.getUserId())
+        User user = userRepository.findByEmail(loginRequest.getUserId())
                 .orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(loginRequest.getUserPassword(), user.getPassword())) {
@@ -38,8 +40,8 @@ public class AuthService {
         String accessToken;
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId());
 
-        if (Role.TRAINER == user.getRole()) {
-            Long trainerId = trainerRepository.findTrainerIdByUserId(user.getUserId())
+        if (Role.PARTNER == user.getRole()) {
+            Long trainerId = partnerRepository.findPartnerIdByUserId(user.getUserId())
                     .orElseThrow(UserNotFoundException::new);
 
             accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), trainerId);

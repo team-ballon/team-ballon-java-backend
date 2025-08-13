@@ -37,8 +37,7 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
             return body;
         }
 
-        String requestId = UUID.randomUUID().toString(); // 또는 MDC에서 추출 가능
-        CommonResponse<Object> commonResponse = new CommonResponse<>(body, "req_" + requestId);
+        CommonResponse<Object> commonResponse = new CommonResponse<>(body);
 
         log.info(commonResponse.toString());
 

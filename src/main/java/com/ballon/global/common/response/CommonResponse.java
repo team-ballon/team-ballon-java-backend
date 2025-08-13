@@ -11,9 +11,9 @@ public class CommonResponse<T> {
     private final T data;
     private final Meta meta;
 
-    public CommonResponse(T data, String requestId) {
+    public CommonResponse(T data) {
         this.data = data;
-        this.meta = new Meta(Instant.now().toString(), requestId);
+        this.meta = new Meta();
     }
 
 }

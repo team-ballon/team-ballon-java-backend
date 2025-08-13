@@ -2,11 +2,9 @@ package com.ballon.global.common.exception;
 
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-
 public class ForbiddenException extends BaseException {
-    public ForbiddenException(List<ErrorResponse.FieldError> errors)
+    public ForbiddenException(String details)
     {
-        super(HttpStatus.FORBIDDEN.getReasonPhrase(), "권한이 없습니다.", HttpStatus.FORBIDDEN, errors );
+        super(HttpStatus.FORBIDDEN.getReasonPhrase(), "권한이 없습니다.", HttpStatus.FORBIDDEN, details );
     }
 }

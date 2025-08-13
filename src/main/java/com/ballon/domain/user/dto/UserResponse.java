@@ -13,23 +13,17 @@ import java.time.LocalDateTime;
 @Setter
 public class UserResponse {
 
-    /**
-     * 아이디
-     */
+    // 아이디
     private Long userId;
 
-    /**
-     * 이름
-     */
+
+    // 이름
     private String name;
 
-    /**
-     * 권한
-     */
+
+    // 권한
     private String role;
 
-    /**
-     * 생성 시간
-     */
+    // 생성 시간
     private LocalDateTime createdAt;
 }

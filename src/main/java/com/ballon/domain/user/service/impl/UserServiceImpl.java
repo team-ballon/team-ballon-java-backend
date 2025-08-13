@@ -23,15 +23,13 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final RefreshTokenRepository refreshTokenRepository;
-
     private final UserRepository userRepository;
 
     @Override
     public UserResponse registerUser(UserRegisterRequest userRegisterRequest, Role role) {
         log.info("회원가입 시도: email={}, role={}", userRegisterRequest.getEmail(), role.name());
 
-        if (Boolean.TRUE.equals(userRepository.existsByEmailAndIsActiveIsTrue(userRegisterRequest.getEmail()))) {
+        if (Boolean.TRUE.equals(userRepository.existsByEmail(userRegisterRequest.getEmail()))) {
             throw new UserConflictException();
         }
 

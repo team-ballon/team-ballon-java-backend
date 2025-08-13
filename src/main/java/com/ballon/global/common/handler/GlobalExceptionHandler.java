@@ -1,8 +1,7 @@
 package com.ballon.global.common.handler;
 
 import com.ballon.global.common.exception.BaseException;
-import com.ballon.global.common.exception.ErrorResponse;
-import com.ballon.global.common.exception.ErrorResponseFactory;
+import com.ballon.global.common.response.ErrorResponse;
 import com.ballon.global.common.response.Meta;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,20 +34,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ErrorResponse> handleValidationExceptions(Exception ex) {
-        BindingResult bindingResult;
 
-        if (ex instanceof MethodArgumentNotValidException) {
-            bindingResult = ((MethodArgumentNotValidException) ex).getBindingResult();
-        } else {
-            bindingResult = ((BindException) ex).getBindingResult();
-        }
-
-        List<ErrorResponse.FieldError> errors = bindingResult.getFieldErrors().stream()
-                .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
-                .toList();
+        ErrorResponse errorResponse = new ErrorResponse("VALIDATION_ERROR", "입력 데이터에 오류가 있습니다.", HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(ErrorResponseFactory.of("VALIDATION_ERROR", "입력 데이터에 오류가 있습니다.", errors));
+                .body(errorResponse);
     }
 
     /**
@@ -60,19 +50,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
-        ErrorResponse.ErrorDetail errorDetail = new ErrorResponse.ErrorDetail(
-                ex.getCode(),       // 예: "VALIDATION_ERROR"
-                ex.getMessage(),    // 예: "입력 데이터에 오류가 있습니다."
-                ex.getDetails()     // 필드 별 상세 에러 목록
-        );
 
-        Meta meta = new Meta(
-                Instant.now().toString(),       // 현재 시간 ISO 8601 형식
-                UUID.randomUUID().toString()    // 요청 ID 생성
-        );
+        ErrorResponse errorResponse = new ErrorResponse(ex.getCode(), ex.getDetails(), ex.getStatus().value(), ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(errorDetail, meta);
-        return ResponseEntity.status(ex.getStatus()).body(errorResponse);
+        return ResponseEntity.status(ex.getStatus())
+                .body(errorResponse);
     }
 
     /**
@@ -86,8 +68,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception ex) {
         log.error("Unhandled exception occurred: {}", ex.getMessage(), ex); // 에러 레벨로 로그 기록
 
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponseFactory.of(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "서버 오류가 발생했습니다."));
+                .body(errorResponse);
     }
 
 }

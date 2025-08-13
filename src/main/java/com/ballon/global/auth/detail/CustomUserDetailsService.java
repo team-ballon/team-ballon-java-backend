@@ -1,5 +1,6 @@
 package com.ballon.global.auth.detail;
 
+import com.ballon.domain.partner.repository.PartnerRepository;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.repository.UserRepository;
 import io.micrometer.common.util.StringUtils;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
+    private final PartnerRepository partnerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String userIdStr) throws UsernameNotFoundException {
@@ -26,8 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
 
         Long trainerId = null;
-        if (Role.TRAINER == user.getRole()) {
-            trainerId = trainerRepository.findTrainerIdByUserId(userId)
+        if (Role.PARTNER == user.getRole()) {
+            trainerId = partnerRepository.findPartnerIdByUserId(userId)
                     .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
         }
 

@@ -1,8 +1,8 @@
 package com.ballon.global.auth.jwt;
 
-import com.fightingkorea.platform.domain.auth.repository.RefreshTokenRepository;
-import com.fightingkorea.platform.domain.trainer.repository.TrainerRepository;
-import com.fightingkorea.platform.domain.user.repository.UserRepository;
+import com.ballon.domain.auth.repository.RefreshTokenRepository;
+import com.ballon.domain.partner.repository.PartnerRepository;
+import com.ballon.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -24,7 +24,7 @@ public class JwtTokenUtil {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
-    private final TrainerRepository trainerRepository;
+    private final PartnerRepository partnerRepository;
 
     @Value("${jwt.access.secret.key}")
     private String accessSecret;
@@ -120,11 +120,12 @@ public class JwtTokenUtil {
             throw new RuntimeException("Refresh Token이 일치하지 않습니다.");
         }
 
-        // trainerId 조회 (선택적으로 존재)
-        Long trainerId = trainerRepository.findTrainerIdByUserId(userId).orElse(null);
+       /* // trainerId 조회 (선택적으로 존재)
+        Long trainerId = partnerRepository.findTrainerIdByUserId(userId).orElse(null);
 
         return Objects.nonNull(trainerId) ?
-                createAccessToken(userId, trainerId) : createAccessToken(userId);
+                createAccessToken(userId, trainerId) : createAccessToken(userId);*/
+        return null;
     }
 
 }

@@ -24,10 +24,10 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> registerTrainee(@RequestBody @Validated UserRegisterRequest userRegisterRequest) {
+    public ResponseEntity<UserResponse> registerUser(@RequestBody @Validated UserRegisterRequest userRegisterRequest) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(userService.registerUser(userRegisterRequest, Role.TRAINEE));
+                .body(userService.registerUser(userRegisterRequest, Role.USER));
     }
 
 }

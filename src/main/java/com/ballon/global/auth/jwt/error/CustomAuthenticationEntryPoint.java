@@ -1,8 +1,7 @@
 package com.ballon.global.auth.jwt.error;
 
+import com.ballon.global.common.response.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fightingkorea.platform.global.common.exception.ErrorResponse;
-import com.fightingkorea.platform.global.common.exception.ErrorResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -37,10 +36,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                          AuthenticationException authException) throws IOException {
 
         // 공통 에러 응답 객체 생성 (code: "UNAUTHORIZED", message: "인증이 필요합니다.")
-        ErrorResponse errorResponse = ErrorResponseFactory.of(
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                "인증이 필요합니다."
-        );
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "인증이 필요합니다.", HttpStatus.UNAUTHORIZED.value());
 
         // 응답 헤더에 JSON 콘텐츠 타입 설정
         response.setContentType("application/json");

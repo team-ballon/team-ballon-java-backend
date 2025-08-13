@@ -14,7 +14,7 @@ import java.util.List;
 public abstract class BaseException extends RuntimeException {
     private final String code;                      // 에러 코드 (예: "VALIDATION_ERROR")
     private final HttpStatus status;                // HTTP 응답 상태 코드
-    private final List<ErrorResponse.FieldError> details;  // 필드별 상세 에러 정보 목록 (없을 수 있음)
+    private final String details;  // 필드별 상세 에러 정보 목록 (없을 수 있음)
 
     /**
      * 상세 정보를 포함한 예외 생성자.
@@ -24,21 +24,10 @@ public abstract class BaseException extends RuntimeException {
      * @param status  HTTP 상태 코드
      * @param details 필드별 상세 오류 리스트 (null 가능)
      */
-    protected BaseException(String code, String message, HttpStatus status, List<ErrorResponse.FieldError> details) {
+    protected BaseException(String code, String message, HttpStatus status, String details) {
         super(message);
         this.code = code;
         this.status = status;
         this.details = details;
-    }
-
-    /**
-     * 상세 정보 없이 예외 생성자.
-     *
-     * @param code    에러 코드
-     * @param message 예외 메시지
-     * @param status  HTTP 상태 코드
-     */
-    protected BaseException(String code, String message, HttpStatus status) {
-        this(code, message, status, null);
     }
 }

@@ -39,6 +39,9 @@ public class User {
     @Column(length = 100)
     private String name; // 이름
 
+    @Column
+    private String refreshToken;
+
     @Column(nullable = false)
     private LocalDateTime createdAt; // 가입 일자
 
@@ -47,7 +50,7 @@ public class User {
                 .email(userRegisterRequest.getEmail())
                 .password(userRegisterRequest.getPassword())
                 .role(role)
-                .name(userRegisterRequest.getNickname())
+                .name(userRegisterRequest.getName())
                 .build();
     }
 

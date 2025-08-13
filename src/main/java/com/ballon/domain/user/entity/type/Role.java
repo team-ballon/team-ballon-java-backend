@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum Role {
-    TRAINEE("수련생"),
-    TRAINER("선수"),
+    USER("회원"),
+    PARTNER("입점업체"),
     ADMIN("관리자");
 
     private final String label;
