@@ -69,6 +69,10 @@ public class User {
 
     }
 
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     // 엔티티 저장 전 생성 시간 자동 설정
     @PrePersist
     public void prePersist() {

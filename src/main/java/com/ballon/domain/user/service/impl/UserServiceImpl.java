@@ -1,6 +1,5 @@
 package com.ballon.domain.user.service.impl;
 
-import com.ballon.domain.auth.repository.RefreshTokenRepository;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.entity.User;

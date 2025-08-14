@@ -11,4 +11,7 @@ public interface PartnerRepository extends JpaRepository<Partner, Long> {
     @Query("SELECT p.partnerId FROM Partner p WHERE p.user.userId = :userId")
     Optional<Long> findPartnerIdByUserId(@Param("userId") Long userId);
 
+    Boolean existsByEmail(String email);
+
+    Optional<Long> findPartnerIdByUser_UserId(Long userId);
 }

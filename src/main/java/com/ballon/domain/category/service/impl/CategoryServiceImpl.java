@@ -33,6 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void renameCategory(Long id, String newName) {
         Category c = repo.getReferenceById(id);
+        // TODO : category DB기능 추가
         // 엔티티 변경 메서드가 없다면 추가: c.changeName(newName);
         // 임시로 리플렉션/필드 접근 대신 전용 메서드를 엔티티에 추가하는 걸 권장
         // 여기서는 가독성 위해 직접 세터 메서드가 있다고 가정

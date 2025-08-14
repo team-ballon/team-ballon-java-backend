@@ -3,8 +3,6 @@ package com.ballon.global.common.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-
 /**
  * 커스텀 예외의 최상위 추상 클래스.
  * 공통으로 사용할 에러 코드, HTTP 상태 코드, 필드별 상세 오류 정보를 포함한다.

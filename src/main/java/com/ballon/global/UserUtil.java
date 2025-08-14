@@ -14,6 +14,7 @@ public class UserUtil {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new IllegalStateException("User is not authenticated.");
         }
+
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails) {
             return (CustomUserDetails) principal;
