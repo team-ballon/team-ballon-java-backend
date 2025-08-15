@@ -62,15 +62,15 @@ jobs:
             sudo install -d -o deploy -g deploy -m 755 ${APP_DIR}/log && \
             sudo systemctl set-environment \
               SPRING_PROFILES_ACTIVE='${{ env.SPRING_PROFILE }}' \
-              DB_HOST='$(printf %q "${{ secrets.DB_HOST }}")' \
-              DB_PORT='$(printf %q "${{ secrets.DB_PORT }}")' \
-              DB_NAME='$(printf %q "${{ secrets.DB_NAME }}")' \
-              DB_SSLMODE='$(printf %q "${{ secrets.DB_SSLMODE }}")' \
-              DB_USERNAME='$(printf %q "${{ secrets.DB_USERNAME }}")' \
-              DB_PASSWORD='$(printf %q "${{ secrets.DB_PASSWORD }}")' \
-              JWT_ACCESS_SECRET='$(printf %q "${{ secrets.JWT_ACCESS_SECRET }}")' \
-              JWT_REFRESH_SECRET='$(printf %q "${{ secrets.JWT_REFRESH_SECRET }}")' \
-              TOSS_PAYMENTS_SECRET_KEY='$(printf %q "${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}")' \
+              DB_HOST='${{ secrets.DB_HOST }}' \
+              DB_PORT='${{ secrets.DB_PORT }}' \
+              DB_NAME='${{ secrets.DB_NAME }}' \
+              DB_SSLMODE='${{ secrets.DB_SSLMODE }}' \
+              DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+              DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+              JWT_ACCESS_SECRET='${{ secrets.JWT_ACCESS_SECRET }}' \
+              JWT_REFRESH_SECRET='${{ secrets.JWT_REFRESH_SECRET }}' \
+              TOSS_PAYMENTS_SECRET_KEY='${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}' \
             && sudo systemctl restart ${SERVICE_NAME} \
             && systemctl is-active ${SERVICE_NAME} || (journalctl -u ${SERVICE_NAME} -n 200 --no-pager; exit 1)
           "
