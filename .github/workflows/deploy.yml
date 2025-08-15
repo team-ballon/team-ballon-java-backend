@@ -62,18 +62,34 @@ jobs:
             sudo install -d -o deploy -g deploy -m 755 ${APP_DIR}/log && \
             sudo systemctl set-environment \
               SPRING_PROFILES_ACTIVE='${{ env.SPRING_PROFILE }}' \
-              JWT_ACCESS_SECRET='$(printf %q "${{ secrets.JWT_ACCESS_SECRET }}")' \
-              JWT_REFRESH_SECRET='$(printf %q "${{ secrets.JWT_REFRESH_SECRET }}")' \
+              DB_HOST='$(printf %q "${{ secrets.DB_HOST }}")' \
+              DB_PORT='$(printf %q "${{ secrets.DB_PORT }}")' \
+              DB_NAME='$(printf %q "${{ secrets.DB_NAME }}")' \
+              DB_SSLMODE='$(printf %q "${{ secrets.DB_SSLMODE }}")' \
               DB_USERNAME='$(printf %q "${{ secrets.DB_USERNAME }}")' \
               DB_PASSWORD='$(printf %q "${{ secrets.DB_PASSWORD }}")' \
+              JWT_ACCESS_SECRET='$(printf %q "${{ secrets.JWT_ACCESS_SECRET }}")' \
+              JWT_REFRESH_SECRET='$(printf %q "${{ secrets.JWT_REFRESH_SECRET }}")' \
               TOSS_PAYMENTS_SECRET_KEY='$(printf %q "${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}")' \
             && sudo systemctl restart ${SERVICE_NAME} \
             && systemctl is-active ${SERVICE_NAME} || (journalctl -u ${SERVICE_NAME} -n 200 --no-pager; exit 1)
           "
 
-      - name: Smoke via HTTPS
+      # 선택(내부 헬스 스모크): 실패 시 서버 로그 바로 출력
+      - name: Smoke on server (actuator)
         if: always()
         run: |
           set +e
-          curl -fsS -m 8 -o /dev/null https://${{ env.DOMAIN }}/v3/api-docs && echo "OK: api-docs"
+          PORT=${{ secrets.SSH_PORT || 22 }}
+          ssh -p $PORT -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "curl -fsS -m 8 -o /dev/null http://127.0.0.1:8080/actuator/health" \
+          || ssh -p $PORT -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "journalctl -u ${SERVICE_NAME} -n 200 --no-pager; exit 1"
+
+      - name: Smoke via HTTPS (through Nginx)
+        if: always()
+        run: |
+          set +e
+          curl -fsS -m 8 -o /dev/null https://${{ env.DOMAIN }}/api-docs && echo "OK: api-docs"
+          curl -fsS -m 8 -o /dev/null -I https://${{ env.DOMAIN }}/swagger-ui.html && echo "OK: swagger-ui"
           curl -fsS -m 8 -o /dev/null -X OPTIONS https://${{ env.DOMAIN }}/api/auth/login && echo "OK: /api"
