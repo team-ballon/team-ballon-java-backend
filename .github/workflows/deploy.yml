@@ -71,6 +71,8 @@ jobs:
               JWT_ACCESS_SECRET='${{ secrets.JWT_ACCESS_SECRET }}' \
               JWT_REFRESH_SECRET='${{ secrets.JWT_REFRESH_SECRET }}' \
               TOSS_PAYMENTS_SECRET_KEY='${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}' \
+              EMAIL_USERNAME='${{ secrets.EMAIL_USERNAME }}' \
+              EMAIL_PASSWORD='${{ secrets.EMAIL_PASSWORD }}' \
             && sudo systemctl restart ${SERVICE_NAME} \
             && systemctl is-active ${SERVICE_NAME} || (journalctl -u ${SERVICE_NAME} -n 200 --no-pager; exit 1)
           "
