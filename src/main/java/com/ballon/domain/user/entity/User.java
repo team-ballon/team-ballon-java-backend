@@ -1,6 +1,7 @@
 package com.ballon.domain.user.entity;
 
 import com.ballon.domain.user.dto.UserRegisterRequest;
+import com.ballon.domain.user.dto.UserUpdateRequest;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
 import com.ballon.domain.user.entity.type.converter.RoleConverter;
@@ -28,6 +29,9 @@ public class User {
     @Column(length = 100, unique = true, nullable = false)
     private String email; // 이메일 (로그인 ID)
 
+    @Column
+    private Integer age;
+
     @Convert(converter = RoleConverter.class)
     @Column(nullable = false)
     private Role role; // 회원 권한 (수련생, 선수, 관리자 등)
@@ -49,6 +53,7 @@ public class User {
         return User.builder()
                 .email(userRegisterRequest.getEmail())
                 .password(userRegisterRequest.getPassword())
+                .age(userRegisterRequest.getAge())
                 .role(role)
                 .name(userRegisterRequest.getName())
                 .build();
@@ -65,8 +70,10 @@ public class User {
     }
 
     // 회원 정보 업데이트
-    public void updateUser() {
-
+    public void updateUser(UserUpdateRequest userUpdateRequest) {
+        this.age = userUpdateRequest.getAge();
+        this.sex = userUpdateRequest.getSex();
+        this.name = userUpdateRequest.getName();
     }
 
     public void updateRefreshToken(String refreshToken) {

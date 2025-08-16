@@ -1,6 +1,5 @@
 package com.ballon.domain.category.entity;
 
-import com.ballon.domain.category.service.CategoryService;
 import jakarta.persistence.*;
 import lombok.*;
 
