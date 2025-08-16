@@ -11,6 +11,21 @@ CREATE TABLE "user" (
                         "created_at" TIMESTAMP NOT NULL
 );
 
+CREATE TABLE verification_code (
+                                   id BIGSERIAL PRIMARY KEY,          -- PK (자동 증가)
+                                   email VARCHAR(255) NOT NULL,       -- 인증 대상 이메일
+                                   code VARCHAR(20) NOT NULL,         -- 인증 코드
+                                   expires_at TIMESTAMP NOT NULL,     -- 만료 시각
+                                   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                   used BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX idx_verification_email_code
+    ON verification_code (email, code);
+
+CREATE INDEX idx_verification_expires_at
+    ON verification_code (expires_at);
+
 CREATE TABLE "category" (
                             "category_id" SERIAL PRIMARY KEY,
                             "name" VARCHAR(100) NOT NULL UNIQUE,
@@ -52,7 +67,7 @@ CREATE TABLE "partner" (
 
 CREATE TABLE "address" (
                            "address_id" SERIAL PRIMARY KEY,
-                           "address" VARCHAR(200) NOT NULL,
+                           "detail_address" VARCHAR(200) NOT NULL,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 

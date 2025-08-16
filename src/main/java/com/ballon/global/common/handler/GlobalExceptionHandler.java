@@ -34,6 +34,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ErrorResponse> handleValidationExceptions(Exception ex) {
+        log.error("ValidationException handled: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = new ErrorResponse("VALIDATION_ERROR", "입력 데이터에 오류가 있습니다.", HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
 
@@ -50,6 +51,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
+        log.error("BaseException handled: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = new ErrorResponse(ex.getCode(), ex.getDetails(), ex.getStatus().value(), ex.getMessage());
 
