@@ -4,6 +4,7 @@ import com.ballon.global.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -49,6 +50,9 @@ public class SecurityConfig {
                                 "/api/users/register"
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
+
+                        .requestMatchers(HttpMethod.GET, "/api/categories/roots").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/*/children").permitAll()
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")// ADMIN만 접근
 

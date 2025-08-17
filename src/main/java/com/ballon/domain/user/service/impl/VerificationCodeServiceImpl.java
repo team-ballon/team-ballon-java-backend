@@ -25,8 +25,25 @@ public class VerificationCodeServiceImpl {
         VerificationCode vc = VerificationCode.of(email, code, LocalDateTime.now().plusNanos(EXPIRATION_MILLIS * 1_000_000));
         repository.save(vc);
 
-        String title = "이메일 인증 코드";
-        String content = "<h1>인증코드: " + code + "</h1><p>입력하세요.</p>";
+        String title = "[BALA] 이메일 인증 코드";
+        String content = """
+  <html>
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+  <div style="max-width: 600px; margin: auto; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+    <h2 style="color: #333; text-align: center;">이메일 인증</h2>
+      <p style="font-size: 14px; color: #555; text-align: center;">
+      아래 인증 코드를 입력해 주세요:
+        </p>
+      <div style="background: #f0f0f0; padding: 15px; margin: 20px auto; text-align: center; font-size: 24px; font-weight: bold; color: #2c3e50; border-radius: 6px; width: fit-content;">
+        %s
+        </div>
+      <p style="font-size: 12px; color: #999; text-align: center; margin-top: 30px;">
+      본 메일은 발신 전용입니다. 문의사항은 홈페이지를 통해 문의해주세요.
+        </p>
+      </div>
+    </body>
+  </html>
+  """.formatted(code);
         try {
             emailService.sendEmail(email, title, content);
         } catch (Exception e) {

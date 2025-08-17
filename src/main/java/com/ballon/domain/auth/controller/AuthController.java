@@ -94,10 +94,10 @@ public class AuthController {
             }
     )
     @PostMapping("/send-code")
-    public ResponseEntity<String> sendCode(@RequestParam String email) {
+    public String sendCode(@RequestParam String email) {
         verificationCodeService.sendCodeToEmail(email);
 
-        return ResponseEntity.ok("인증 코드가 전송되었습니다.");
+        return "인증 코드가 전송되었습니다.";
     }
 
     @Operation(

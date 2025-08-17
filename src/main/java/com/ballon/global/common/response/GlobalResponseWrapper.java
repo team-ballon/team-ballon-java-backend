@@ -3,12 +3,15 @@ package com.ballon.global.common.response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.UUID;
 
 @Slf4j
@@ -17,7 +20,20 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-        // 응답 타입 검사 생략, 모두 적용
+        Class<?> clazz = returnType.getParameterType();
+
+        // 순수 String 응답이거나 ResponseEntity<String> 응답은 제외
+        if (clazz.equals(String.class)) {
+            return false;
+        }
+        if (ResponseEntity.class.isAssignableFrom(clazz)) {
+            // 제네릭 타입 검사
+            Type genericType = returnType.getGenericParameterType();
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) genericType;
+                return !pt.getActualTypeArguments()[0].getTypeName().equals("java.lang.String");
+            }
+        }
         return true;
     }
 
