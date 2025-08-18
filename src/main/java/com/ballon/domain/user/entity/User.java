@@ -54,6 +54,7 @@ public class User {
                 .email(userRegisterRequest.getEmail())
                 .password(userRegisterRequest.getPassword())
                 .age(userRegisterRequest.getAge())
+                .sex(userRegisterRequest.getSex())
                 .role(role)
                 .name(userRegisterRequest.getName())
                 .build();
