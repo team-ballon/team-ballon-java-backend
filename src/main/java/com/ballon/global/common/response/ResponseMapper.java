@@ -8,7 +8,7 @@ public class ResponseMapper {
     private ResponseMapper() {}
 
     public static UserResponse toUserResponse(User user) {
-        return new UserResponse(user.getUserId(), user.getEmail(),user.getName(), user.getSex().getLabel(),
+        return new UserResponse(user.getUserId(), user.getEmail(),user.getName(), user.getAge(), user.getSex().getLabel(),
                 user.getRole().getLabel(), user.getCreatedAt());
     }
 }
