@@ -13,7 +13,6 @@ INSERT INTO category (name, depth, parent_id) VALUES
                                                   ('향수/디퓨저', 0, NULL),      -- 11
                                                   ('네일', 0, NULL);             -- 12
 
-
 -- 스킨케어 (id = 1)
 INSERT INTO category (name, depth, parent_id) VALUES
                                                   ('스킨/토너', 1, 1),
