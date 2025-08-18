@@ -5,6 +5,7 @@ import com.ballon.domain.user.repository.VerificationCodeRepository;
 import com.ballon.domain.user.service.EmailService;
 import com.ballon.global.common.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VerificationCodeServiceImpl {
     private static final long EXPIRATION_MILLIS = 600000;
     private final EmailService emailService;
@@ -47,6 +49,7 @@ public class VerificationCodeServiceImpl {
         try {
             emailService.sendEmail(email, title, content);
         } catch (Exception e) {
+            log.error("이메일 전송 실패: {}", e.getMessage(), e);
             throw new BadRequestException("이메일 전송 실패");
         }
     }
