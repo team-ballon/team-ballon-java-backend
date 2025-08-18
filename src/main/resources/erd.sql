@@ -28,7 +28,7 @@ CREATE INDEX idx_verification_expires_at
 
 CREATE TABLE "category" (
                             "category_id" SERIAL PRIMARY KEY,
-                            "name" VARCHAR(100) NOT NULL UNIQUE,
+                            "name" VARCHAR(100) NOT NULL,
                             "depth" SMALLINT,
                             "parent_id" INTEGER
 );
