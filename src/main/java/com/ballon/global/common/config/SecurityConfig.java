@@ -51,6 +51,7 @@ public class SecurityConfig {
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
 
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/roots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/*/children").permitAll()
 

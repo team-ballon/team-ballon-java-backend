@@ -3,8 +3,6 @@ package com.ballon.global.common.response;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.time.Instant;
-
 @Getter
 @ToString
 public class CommonResponse<T> {
