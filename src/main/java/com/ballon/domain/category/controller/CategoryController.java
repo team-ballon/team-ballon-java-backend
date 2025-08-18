@@ -15,6 +15,11 @@ import java.util.List;
 public class CategoryController {
     private final CategoryReadService categoryReadService;
 
+    @GetMapping
+    public List<CategoryCacheStore.Node> getAll() {
+        return categoryReadService.getAll();
+    }
+
     @GetMapping("/roots")
     public List<CategoryCacheStore.Node> roots() {
         return categoryReadService.getRootCategories(); // 캐시에서 반환

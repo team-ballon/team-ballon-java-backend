@@ -71,6 +71,16 @@ public class CategoryCacheStore {
             lock.writeLock().unlock();
         }
     }
+    
+    public List<Node> getAll() {
+        lock.readLock().lock();
+        try {
+            return new ArrayList<>(byId.values());
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
 
     // ===== 조회 API (전부 메모리) =====
     public List<Node> getRoots() {

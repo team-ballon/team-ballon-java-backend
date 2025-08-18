@@ -1,4 +1,3 @@
-// src/main/java/com/ballon/global/cache/CategoryCacheWarmup.java
 package com.ballon.global.cache;
 
 import com.ballon.domain.category.repository.CategoryRepository;
