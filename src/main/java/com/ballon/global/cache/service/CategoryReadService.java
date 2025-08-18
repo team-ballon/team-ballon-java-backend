@@ -1,17 +1,19 @@
 package com.ballon.global.cache.service;
 
 import com.ballon.global.cache.CategoryCacheStore;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryReadService {
 
     private final CategoryCacheStore cache;
 
-    public CategoryReadService(CategoryCacheStore cache) {
-        this.cache = cache;
+    public List<CategoryCacheStore.Node> getAll() {
+        return cache.getAll();
     }
 
     // 최상위 카테고리 리스트

@@ -3,7 +3,6 @@ package com.ballon.global.common.response;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 @Data
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
