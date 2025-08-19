@@ -30,7 +30,7 @@ CREATE TABLE "category" (
                             "category_id" SERIAL PRIMARY KEY,
                             "name" VARCHAR(100) NOT NULL,
                             "depth" SMALLINT,
-                            "parent_id" INTEGER
+                            "parent_id" INTEGER REFERENCES "category" ("category_id") ON DELETE CASCADE
 );
 
 CREATE TABLE "permission" (
@@ -67,7 +67,12 @@ CREATE TABLE "partner" (
 
 CREATE TABLE "address" (
                            "address_id" SERIAL PRIMARY KEY,
-                           "detail_address" VARCHAR(200) NOT NULL,
+                           name VARCHAR(100) NOT NULL, -- 배송지명 (예: 우리집, 회사)
+                           recipient VARCHAR(50) NOT NULL,    -- 수령인
+                           contact_number VARCHAR(20) NOT NULL, -- 연락처
+                           base_address VARCHAR(255) NOT NULL,     -- 주소
+                           detail_address VARCHAR(255),       -- 상세주소 (필수 아닐 수 있음)
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 생성일시
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
