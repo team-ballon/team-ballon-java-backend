@@ -38,6 +38,7 @@ public class AddressServiceImpl implements AddressService {
 
         return new AddressResponse(
                 address.getAddressId(),
+                address.getName(),
                 address.getRecipient(),
                 address.getContactNumber(),
                 address.getBaseAddress(),
