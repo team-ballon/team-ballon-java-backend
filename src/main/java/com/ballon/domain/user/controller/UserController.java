@@ -110,6 +110,26 @@ public class UserController {
                 .body(addressService.createAddress(UserUtil.getUserId(), addressRequest));
     }
 
+    @Operation(
+            summary = "배송지 수정",
+            description = "본인 계정의 배송지 정보를 수정합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "배송지 수정 성공"),
+                    @ApiResponse(responseCode = "404", description = "배송지를 찾을 수 없음",
+                            content = @Content(schema = @Schema(example = "{\"message\": \"존재하지 않는 배송지입니다.\"}"))
+                    ),
+                    @ApiResponse(responseCode = "403", description = "본인이 아님.",
+                            content = @Content(schema = @Schema(example = "{\"message\": \"인증 되지 않은 사용자입니다.\"}"))
+                    )
+            }
+    )
+    @PutMapping("/me/address/{address-id}")
+    public ResponseEntity<Void> updateAddress(@PathVariable("address-id") Long addressId, @RequestBody @Validated AddressRequest addressRequest) {
+        addressService.updateAddress(addressId, addressRequest,  UserUtil.getUserId());
+
+        return ResponseEntity.noContent().build();
+    }
+
 
     @Operation(
             summary = "배송지 삭제",

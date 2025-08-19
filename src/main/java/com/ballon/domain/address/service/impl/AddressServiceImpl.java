@@ -56,4 +56,18 @@ public class AddressServiceImpl implements AddressService {
 
         addressRepository.delete(address);
     }
+
+    @Override
+    public void updateAddress(Long addressId, AddressRequest addressRequest, Long userId) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new NotFoundException("배송지를 찾을 수 없습니다."));
+
+        if(!address.getUser().getUserId().equals(userId)){
+            throw new ForbiddenException("인증되지 않은 사용자입니다.");
+        }
+
+        address.update(addressRequest);
+
+        addressRepository.save(address);
+    }
 }

@@ -56,6 +56,14 @@ public class Address {
                 .build();
     }
 
+    public void update(AddressRequest addressRequest) {
+        this.name = addressRequest.getName();
+        this.recipient = addressRequest.getRecipient();
+        this.contactNumber = addressRequest.getContactNumber();
+        this.baseAddress = addressRequest.getBaseAddress();
+        this.detailAddress = addressRequest.getDetailAddress();
+    }
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
