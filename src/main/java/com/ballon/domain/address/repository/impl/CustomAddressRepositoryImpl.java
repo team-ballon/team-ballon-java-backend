@@ -22,10 +22,15 @@ public class CustomAddressRepositoryImpl implements CustomAddressRepository {
         return queryFactory
                 .select(Projections.constructor(AddressResponse.class,
                         address.addressId,
+                        address.name,
+                        address.recipient,
+                        address.contactNumber,
+                        address.baseAddress,
                         address.detailAddress
                 ))
                 .from(address)
                 .where(address.user.userId.eq(userId))
+                .orderBy(address.createdAt.desc())
                 .fetch();
     }
 }
