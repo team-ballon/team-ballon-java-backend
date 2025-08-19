@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class AddressResponse {
     private Long addressId;
+    private String name;
     private String recipient;
     private String contactNumber;
     private String baseAddress;
