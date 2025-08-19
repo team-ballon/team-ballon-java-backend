@@ -3,9 +3,11 @@ package com.ballon.domain.auth.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class LoginRequest {
 
     @NotBlank(message = "아이디는 필수입니다.")
