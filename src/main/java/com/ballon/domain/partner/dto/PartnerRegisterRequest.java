@@ -2,13 +2,11 @@ package com.ballon.domain.partner.dto;
 
 import com.ballon.domain.user.entity.type.Sex;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter
+@Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class PartnerRegisterRequest {
     // user 등록에 필요한 컬럼
     @NotBlank(message = "이메일은 필수입니다.")

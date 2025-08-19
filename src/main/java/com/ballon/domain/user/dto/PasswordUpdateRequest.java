@@ -1,12 +1,10 @@
 package com.ballon.domain.user.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter
+@Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class PasswordUpdateRequest {
 
     private String currentPassword;

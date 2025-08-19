@@ -33,10 +33,16 @@ public class AddressServiceImpl implements AddressService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        Address address = Address.of(request.getDetailAddress(), user);
-        Address saved = addressRepository.save(address);
+        Address address = Address.of(request, user);
+        addressRepository.save(address);
 
-        return new AddressResponse(saved.getAddressId(), saved.getDetailAddress());
+        return new AddressResponse(
+                address.getAddressId(),
+                address.getRecipient(),
+                address.getContactNumber(),
+                address.getBaseAddress(),
+                address.getDetailAddress()
+        );
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.ballon.domain.admin.dto;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class PermissionRequest {
     private String permissionName;
     private String permissionDescription;

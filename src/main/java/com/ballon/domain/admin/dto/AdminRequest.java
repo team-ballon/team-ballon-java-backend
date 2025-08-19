@@ -1,11 +1,13 @@
 package com.ballon.domain.admin.dto;
 
 import com.ballon.domain.user.dto.UserRegisterRequest;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class AdminRequest {
     UserRegisterRequest userRegisterRequest;
     private String email;

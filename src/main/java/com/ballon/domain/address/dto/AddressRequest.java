@@ -1,9 +1,15 @@
 package com.ballon.domain.address.dto;
 
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class AddressRequest {
+    private String name;
+    private String recipient;
+    private String contactNumber;
+    private String baseAddress;
     private String detailAddress;
 }
