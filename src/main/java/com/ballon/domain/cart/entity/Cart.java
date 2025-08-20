@@ -23,7 +23,7 @@ public class Cart {
     private Long id;
 
     // 회원 1 : 장바구니 1
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_cart_user"))

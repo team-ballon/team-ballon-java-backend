@@ -1,3 +1,5 @@
+SET search_path TO shoppingmall;
+
 -- 1. 기초 테이블 (참조되는 테이블 먼저)
 CREATE TABLE "user" (
                         "user_id" SERIAL PRIMARY KEY,

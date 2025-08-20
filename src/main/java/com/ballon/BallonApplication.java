@@ -9,7 +9,11 @@ import org.springframework.cache.annotation.EnableCaching;
 public class BallonApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(BallonApplication.class, args);
+        try {
+            SpringApplication.run(BallonApplication.class, args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

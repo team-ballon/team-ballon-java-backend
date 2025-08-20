@@ -32,7 +32,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public CartResponse getMyCart(Long userId) {
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.builder()
                                 .user(User.builder().userId(userId).build())
                         .build()));
@@ -41,7 +41,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse addItem(Long userId, CartItemRequest req) {
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.builder()
                     .user(User.builder().userId(userId).build())
                 .build()));
@@ -49,7 +49,7 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(req.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("상품이 존재하지 않습니다."));
 
-        CartItem item = cartItemRepository.findByCartIdAndUserId(cart.getId(), product.getId())
+        CartItem item = cartItemRepository.findByCartIdAndCartUserUserId(cart.getId(), product.getId())
                 .orElseGet(() -> {
                     CartItem created = CartItem.builder()
                             .product(product)
@@ -68,7 +68,7 @@ public class CartServiceImpl implements CartService {
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("수량은 0 이상이어야 합니다.)");
         }
-        Cart cart =cartRepository.findByUserId(userId)
+        Cart cart =cartRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니가 없습니다."));
 
         CartItem item = cart.getItems().stream()
@@ -86,7 +86,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse removeItem(Long userId, Long cartItemId) {
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니가 없습니다."));
         CartItem item = cart.getItems().stream()
                 .filter(ci -> ci.getId().equals(cartItemId))
