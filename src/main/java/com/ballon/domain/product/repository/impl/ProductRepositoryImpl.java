@@ -1,36 +1,38 @@
 package com.ballon.domain.product.repository.impl;
 
+import com.ballon.domain.category.entity.QCategory;
+import com.ballon.domain.partner.entity.QPartner;
 import com.ballon.domain.product.dto.ProductSearchCond;
 import com.ballon.domain.product.dto.ProductSummaryDto;
+import com.ballon.domain.product.entity.QProduct;
 import com.ballon.domain.product.repository.ProductRepositoryCustom.ProductRepositoryCustom;
+
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.QueryFactory;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Repository
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
-    private final JPAQueryFactory jpaQueryFactory;
-    private final QueryFactory queryFactory;
+    private final JPAQueryFactory queryFactory;
+
 
     @Override
     public Page<ProductSummaryDto> search(ProductSearchCond cond, Pageable pageable) {
-    QProdcut p = QProduct.product;
-    QCategry c = Qcategory.cateory;
-    QPatner ptn = QPartner.partner;
+    QProduct p = QProduct.product;
+    QCategory c = QCategory.category;
+    QPartner ptn = QPartner.partner;
 
     // 동적 where
         BooleanBuilder where = new BooleanBuilder();
@@ -38,10 +40,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             where.and(p.name.containsIgnoreCase(cond.getKeyword().trim()));
         }
         if (cond.getCategoryId() != null) {
-            where.and(p.category.id.eq(cond.getCategoryId()));
+            where.and(p.category.categoryId.eq(cond.getCategoryId()));
         }
         if (cond.getPartnerId() != null) {
-            where.and(p.partner.id.eq(cond.getPartnerId()));
+            where.and(p.partner.partnerId.eq(cond.getPartnerId()));
         }
         if (cond.getMinPrice() != null) {
             where.and(p.price.goe(cond.getMinPrice()));
@@ -60,8 +62,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         List<ProductSummaryDto> content = queryFactory
                 .select(Projections.constructor(ProductSummaryDto.class,
                         p.id, p.name, p.price, p.status.stringValue(), p.quantity,
-                        p.category.id, p.category.name,
-                        p.partner.id, p.partner.name
+                        p.category.categoryId, p.category.name,
+                        p.partner.partnerId, p.partner.name
                 ))
                 .from(p)
                 .join(p.category, c)
@@ -78,7 +80,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .where(where)
                 .fetchOne();
 
-        return new PageImpl<>(content, pageable, total =null ? 0 : total);
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 
     // Pageable 정렬 -> 안전한 OrderSpecifier 로 변환
