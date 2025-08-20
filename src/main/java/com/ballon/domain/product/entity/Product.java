@@ -52,8 +52,8 @@ public class Product {
         if (price < 0) throw new IllegalArgumentException("가격은 0 이상이어야 합니다.");
         this.price = price;
     }
-    public void changeQuantity(Integer Quantity) {
-        if (quantity < 0) throw new IllegalArgumentException("수량은 0 이상이어야 합니다.");
+    public void changeQuantity(Integer quantity) {
+        if (quantity == null || quantity < 0) throw new IllegalArgumentException("수량은 0 이상이어야 합니다.");
         this.quantity = quantity;
     }
     public void changeStatus(Status status) {
