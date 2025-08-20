@@ -18,11 +18,11 @@
 src
 ├── domain
 │ └── [Entity명]
-│ ├── controller
-│ ├── dto
-│ ├── entity
-│ ├── repository
-│ └── service
+│   ├── controller
+│   ├── dto
+│   ├── entity
+│   ├── repository
+│   └── service
 └── global
 ````
 ### domain 규칙
