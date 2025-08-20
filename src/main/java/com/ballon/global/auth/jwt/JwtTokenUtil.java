@@ -1,8 +1,8 @@
 package com.ballon.global.auth.jwt;
 
-import com.ballon.domain.partner.repository.PartnerRepository;
 import com.ballon.domain.user.exception.UserNotFoundException;
 import com.ballon.domain.user.repository.UserRepository;
+import com.ballon.global.common.exception.NotFoundException;
 import com.ballon.global.common.exception.UnauthorizedException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -24,7 +23,6 @@ public class JwtTokenUtil {
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7L;  // 7일
 
     private final UserRepository userRepository;
-    private final PartnerRepository partnerRepository;
 
     @Value("${jwt.access.secret.key}")
     private String accessSecret;
@@ -32,30 +30,22 @@ public class JwtTokenUtil {
     @Value("${jwt.refresh.secret.key}")
     private String refreshSecret;
 
-    // access token 생성 (trainerId 없이)
+    // access token 생성
     public String createAccessToken(Long userId) {
-        return createToken(userId, ACCESS_TOKEN_VALIDITY, accessSecret, null);
-    }
-
-    // access token 생성 (trainerId 포함)
-    public String createAccessToken(Long userId, Long trainerId) {
-        return createToken(userId, ACCESS_TOKEN_VALIDITY, accessSecret, trainerId);
+        return createToken(userId, ACCESS_TOKEN_VALIDITY, accessSecret);
     }
 
     // refresh token 생성
     public String createRefreshToken(Long userId) {
-        return createToken(userId, REFRESH_TOKEN_VALIDITY, refreshSecret, null);
+        return createToken(userId, REFRESH_TOKEN_VALIDITY, refreshSecret);
     }
 
     // 공통 토큰 생성 로직
-    private String createToken(Long userId, long validity, String secret, Long trainerId) {
+    private String createToken(Long userId, long validity, String secret) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + validity);
 
         Claims claims = Jwts.claims().setSubject(String.valueOf(userId));
-        if (trainerId != null) {
-            claims.put("trainerId", trainerId);
-        }
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -88,18 +78,6 @@ public class JwtTokenUtil {
                 .getSubject();
     }
 
-    // trainerId 추출 (access token에서만 사용)
-    public Long getTrainerId(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(accessSecret.getBytes())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        Object trainerId = claims.get("trainerId");
-        return trainerId != null ? Long.parseLong(trainerId.toString()) : null;
-    }
-
     // refresh token으로 access token 재발급
     public String refresh(String refreshToken) {
         if (!validateToken(refreshToken, false)) {
@@ -113,18 +91,14 @@ public class JwtTokenUtil {
         }
 
         String storedToken = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Refresh Token이 존재하지 않습니다."))
+                .orElseThrow(() -> new NotFoundException("Refresh Token이 존재하지 않습니다."))
                 .getRefreshToken();
 
         if (!refreshToken.equals(storedToken)) {
             throw new UnauthorizedException("Refresh Token이 일치하지 않습니다.");
         }
 
-        // trainerId 조회 (선택적으로 존재)
-        Long trainerId = partnerRepository.findPartnerIdByUser_UserId(userId).orElse(null);
-
-        return Objects.nonNull(trainerId) ?
-                createAccessToken(userId, trainerId) : createAccessToken(userId);
+        return createAccessToken(userId);
     }
 
 }

@@ -11,6 +11,6 @@ public class AdminResponse {
     private Long adminId;
     private String email;
     private String roleName;
-    private List<String> permissions;
+    private List<PermissionResponse> permissions;
 }
 

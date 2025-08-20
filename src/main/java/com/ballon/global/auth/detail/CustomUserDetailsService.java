@@ -1,5 +1,6 @@
 package com.ballon.global.auth.detail;
 
+import com.ballon.domain.admin.repository.AdminRepository;
 import com.ballon.domain.partner.repository.PartnerRepository;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PartnerRepository partnerRepository;
+    private final AdminRepository adminRepository;
 
     @Override
     public UserDetails loadUserByUsername(String userIdStr) throws UsernameNotFoundException {
@@ -28,8 +30,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
 
         Long trainerId = null;
+        Long adminId = null;
         if (Role.PARTNER == user.getRole()) {
             trainerId = partnerRepository.findPartnerIdByUserId(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
+        } else if(Role.ADMIN == user.getRole()){
+            adminId = adminRepository.findAdminIdByUser_UserId(userId)
                     .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
         }
 
@@ -38,7 +44,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getEmail(),
                 user.getPassword(),
                 user.getRole().name(),
-                trainerId
+                trainerId,
+                adminId
         );
     }
 }

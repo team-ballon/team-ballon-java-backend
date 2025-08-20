@@ -29,4 +29,8 @@ public class UserUtil {
     public static Long getPartnerId() {
         return getCustomUserDetails().getPartnerId();
     }
+
+    public static Long getAdminId() {
+        return getCustomUserDetails().getAdminId();
+    }
 }
