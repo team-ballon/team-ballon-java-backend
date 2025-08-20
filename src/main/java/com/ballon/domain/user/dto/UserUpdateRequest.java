@@ -1,43 +1,21 @@
 package com.ballon.domain.user.dto;
 
-import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- *  유저 정보를 수정하는 dto
- */
+@Data
 @NoArgsConstructor
-@AllArgsConstructor
-@Getter
 public class UserUpdateRequest {
-
-
-    /**
-     * 이메일
-     */
-    private String email;
-
-    /**
-     * 회원 권한
-     */
-    private Role role;
-
-    /**
-     * 나이
-     */
+    @NotNull(message = "나이는 필수입니다.")
+    @Min(value = 1, message = "나이는 1 이상이어야 합니다.")
     private Integer age;
 
-    /**
-     * 성별
-     */
+    @NotNull(message = "성별은 필수입니다.")
     private Sex sex;
 
-    /**
-     * 이름
-     */
     private String name;
 
 }

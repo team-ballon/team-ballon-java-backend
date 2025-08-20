@@ -1,6 +1,7 @@
 package com.ballon.domain.user.entity;
 
 import com.ballon.domain.user.dto.UserRegisterRequest;
+import com.ballon.domain.user.dto.UserUpdateRequest;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
 import com.ballon.domain.user.entity.type.converter.RoleConverter;
@@ -11,7 +12,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "\"user\"")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -27,6 +28,9 @@ public class User {
 
     @Column(length = 100, unique = true, nullable = false)
     private String email; // 이메일 (로그인 ID)
+
+    @Column
+    private Integer age;
 
     @Convert(converter = RoleConverter.class)
     @Column(nullable = false)
@@ -49,6 +53,8 @@ public class User {
         return User.builder()
                 .email(userRegisterRequest.getEmail())
                 .password(userRegisterRequest.getPassword())
+                .age(userRegisterRequest.getAge())
+                .sex(userRegisterRequest.getSex())
                 .role(role)
                 .name(userRegisterRequest.getName())
                 .build();
@@ -65,8 +71,14 @@ public class User {
     }
 
     // 회원 정보 업데이트
-    public void updateUser() {
+    public void updateUser(UserUpdateRequest userUpdateRequest) {
+        this.age = userUpdateRequest.getAge();
+        this.sex = userUpdateRequest.getSex();
+        this.name = userUpdateRequest.getName();
+    }
 
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     // 엔티티 저장 전 생성 시간 자동 설정

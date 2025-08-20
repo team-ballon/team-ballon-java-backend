@@ -2,21 +2,18 @@ package com.ballon.domain.auth.service;
 
 import com.ballon.domain.auth.dto.JwtResponse;
 import com.ballon.domain.auth.dto.LoginRequest;
-import com.ballon.domain.auth.entity.RefreshToken;
-import com.ballon.domain.auth.repository.RefreshTokenRepository;
 import com.ballon.domain.partner.repository.PartnerRepository;
 import com.ballon.domain.user.entity.User;
 import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.exception.UserNotFoundException;
 import com.ballon.domain.user.repository.UserRepository;
 import com.ballon.global.auth.jwt.JwtTokenUtil;
+import com.ballon.global.common.exception.UnauthorizedException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,7 +23,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PartnerRepository partnerRepository;
     private final JwtTokenUtil jwtTokenProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
 
     public JwtResponse login(LoginRequest loginRequest) {
@@ -34,7 +30,7 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(loginRequest.getUserPassword(), user.getPassword())) {
-            throw new RuntimeException();
+            throw new UnauthorizedException("아이디 또는 비밀번호가 다릅니다.");
         }
 
         String accessToken;
@@ -49,24 +45,16 @@ public class AuthService {
             accessToken = jwtTokenProvider.createAccessToken(user.getUserId());
         }
 
-        // 기존 refresh token 조회
-        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser_UserId(user.getUserId());
-
-        if (existingToken.isPresent()) {
-            existingToken.get().updateToken(refreshToken); // setter 또는 별도 메서드 사용
-        } else {
-            refreshTokenRepository.save(RefreshToken.createRefreshToken(refreshToken, user));
-        }
+        user.updateRefreshToken(refreshToken);
 
         return new JwtResponse(accessToken, refreshToken);
     }
 
 
     public void logOut(Long userId) {
-        if (Boolean.FALSE.equals(userRepository.existsByUserId(userId))) {
-            throw new UserNotFoundException();
-        }
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(UserNotFoundException::new);
 
-        refreshTokenRepository.deleteByUser_UserId(userId);
+        user.updateRefreshToken(null);
     }
 }

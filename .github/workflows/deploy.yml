@@ -1,0 +1,78 @@
+name: deploy-ballon-java-maven
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ballon-java-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SERVICE_NAME: ballon-java
+  APP_DIR: /opt/ballon-java
+  JAVA_VERSION: "21"
+  SPRING_PROFILE: "release"
+  DOMAIN: "ba1lon.shop"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Build (Maven)
+        run: mvn -B -DskipTests clean package
+
+      - name: Package artifact
+        run: |
+          mkdir -p build_out
+          cp target/*.jar build_out/app.jar
+
+      - name: SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Upload JAR
+        run: |
+          PORT=${{ secrets.SSH_PORT || 22 }}
+          rsync -avz -e "ssh -p $PORT -o StrictHostKeyChecking=no" \
+            build_out/app.jar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.APP_DIR }}/app.jar
+
+      - name: Ensure log dir, inject env, restart
+        shell: bash
+        run: |
+          PORT=${{ secrets.SSH_PORT || 22 }}
+          ssh -p $PORT -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            sudo install -d -o deploy -g deploy -m 755 ${APP_DIR}/log && \
+            sudo systemctl set-environment \
+              SPRING_PROFILES_ACTIVE='${{ env.SPRING_PROFILE }}' \
+              DB_HOST='${{ secrets.DB_HOST }}' \
+              DB_PORT='${{ secrets.DB_PORT }}' \
+              DB_NAME='${{ secrets.DB_NAME }}' \
+              DB_SSLMODE='${{ secrets.DB_SSLMODE }}' \
+              DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+              DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+              JWT_ACCESS_SECRET='${{ secrets.JWT_ACCESS_SECRET }}' \
+              JWT_REFRESH_SECRET='${{ secrets.JWT_REFRESH_SECRET }}' \
+              TOSS_PAYMENTS_SECRET_KEY='${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}' \
+              EMAIL_USERNAME='${{ secrets.EMAIL_USERNAME }}' \
+              EMAIL_PASSWORD='${{ secrets.EMAIL_PASSWORD }}' \
+            && sudo systemctl restart ${SERVICE_NAME} \
+            && systemctl is-active ${SERVICE_NAME} || (journalctl -u ${SERVICE_NAME} -n 200 --no-pager; exit 1)
+          "

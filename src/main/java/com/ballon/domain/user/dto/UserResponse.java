@@ -2,28 +2,17 @@ package com.ballon.domain.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
-@Setter
 public class UserResponse {
-
-    // 아이디
-    private Long userId;
-
-
-    // 이름
-    private String name;
-
-
-    // 권한
-    private String role;
-
-    // 생성 시간
-    private LocalDateTime createdAt;
+    private Long userId; // pk
+    private String email; // 이메일
+    private String name; // 이름
+    private int age; // 나이
+    private String sex; // 성별
+    private String role; // 권한
+    private LocalDateTime createdAt; // 생성 시간
 }
