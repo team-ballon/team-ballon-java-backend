@@ -1,15 +1,14 @@
 package com.ballon.domain.admin.service.impl;
 
-import com.ballon.domain.admin.dto.AdminRequest;
-import com.ballon.domain.admin.dto.AdminResponse;
+import com.ballon.domain.admin.dto.*;
 import com.ballon.domain.admin.entity.Admin;
 import com.ballon.domain.admin.entity.AdminPermission;
 import com.ballon.domain.admin.entity.Permission;
 import com.ballon.domain.admin.entity.id.AdminPermissionId;
-import com.ballon.domain.admin.repository.AdminPermissionRepository;
 import com.ballon.domain.admin.repository.AdminRepository;
 import com.ballon.domain.admin.repository.PermissionRepository;
 import com.ballon.domain.admin.service.AdminService;
+import com.ballon.domain.admin.service.PermissionService;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.entity.User;
@@ -17,11 +16,17 @@ import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
 import com.ballon.domain.user.repository.UserRepository;
 import com.ballon.domain.user.service.UserService;
+import com.ballon.global.UserUtil;
+import com.ballon.global.common.exception.ForbiddenException;
+import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,10 +35,28 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
     private final AdminRepository adminRepository;
-    private final AdminPermissionRepository adminPermissionRepository;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final PermissionService permissionService;
     private final PermissionRepository permissionRepository;
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<AdminResponse> searchAdmins(AdminSearchRequest req, Pageable pageable) {
+        Sort sort = "oldest".equals(req.getSort())
+                ? Sort.by("createdAt").ascending()
+                : Sort.by("createdAt").descending();
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
+
+        return adminRepository.search(req, sortedPageable)
+                .map(AdminResponse::from);
+    }
+
 
     @Override
     public AdminResponse createAdmin(AdminRequest adminRequest) {
@@ -41,7 +64,7 @@ public class AdminServiceImpl implements AdminService {
         UserRegisterRequest userRegisterRequest = new UserRegisterRequest(
                 adminRequest.getEmail(),
                 adminRequest.getPassword(),
-                20,
+                2,
                 Sex.MALE,
                 UUID.randomUUID().toString()
         );
@@ -49,37 +72,62 @@ public class AdminServiceImpl implements AdminService {
         UserResponse userResponse = userService.registerUser(userRegisterRequest, Role.ADMIN);
         User user = userRepository.getReferenceById(userResponse.getUserId());
 
-        // 어드민 생성
         Admin admin = Admin.of(user, adminRequest.getRoleName());
 
         adminRepository.save(admin);
-
-        // 어드민 - 권한 연결
-        List<AdminPermission> adminPermissions = new ArrayList<>();
-
-        adminRequest.getPermissionIds().forEach(permissionId -> {
-            Permission permission = permissionRepository.getReferenceById(permissionId);
-
-            AdminPermissionId adminPermissionId = new AdminPermissionId(
-                    admin.getAdminId(),
-                    permission.getPermissionId()
-            );
-
-            AdminPermission adminPermission = new AdminPermission(adminPermissionId, admin, permission);
-
-            adminPermissions.add(adminPermission);
-        });
-
-        adminPermissionRepository.saveAll(adminPermissions);
 
         return new AdminResponse(
                 admin.getAdminId(),
                 user.getEmail(),
                 admin.getRole(),
-                adminPermissions.stream()
-                        .map(ap -> ap.getPermission().getName())
+                permissionService.assignPermission(adminRequest.getPermissionIds(), admin)
+        );
+    }
+
+    @Override
+    public AdminResponse updateAdmin(Long adminId, AdminUpdateRequest adminUpdateRequest) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
+
+        admin.updateRole(adminUpdateRequest.getRoleName());
+
+        admin.getAdminPermissions().clear();
+
+        List<Permission> permissions = permissionRepository.findAllById(adminUpdateRequest.getPermissionIds());
+        for (Permission permission : permissions) {
+            admin.getAdminPermissions().add(
+                    new AdminPermission(
+                            new AdminPermissionId(admin.getAdminId(), permission.getPermissionId()),
+                            admin,
+                            permission
+                    )
+            );
+        }
+
+        adminRepository.save(admin);
+
+        return new AdminResponse(
+                admin.getAdminId(),
+                admin.getUser().getEmail(),
+                admin.getRole(),
+                admin.getAdminPermissions().stream()
+                        .map(ap -> new PermissionResponse(
+                                ap.getPermission().getPermissionId(),
+                                ap.getPermission().getName(),
+                                ap.getPermission().getDescription()
+                        ))
                         .toList()
         );
     }
 
+    @Override
+    public void removeAdmin(Long adminId) {
+        if(!adminRepository.existsById(adminId)) {
+            throw new NotFoundException("존재하지 않는 관리자.");
+        }
+
+        Admin admin = adminRepository.getReferenceById(adminId);
+
+        adminRepository.delete(admin);
+    }
 }

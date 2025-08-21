@@ -40,6 +40,10 @@ public class Admin {
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AdminPermission> adminPermissions = new HashSet<>();
 
+    public void updateRole(String role) {
+        this.role = role;
+    }
+
     public static Admin of(User user, String role) {
         return Admin.builder()
                 .user(user)

@@ -16,13 +16,16 @@ public class CustomUserDetails implements UserDetails {
     private final String role;
     @Getter
     private final Long partnerId;
+    @Getter
+    private final Long adminId;
 
-    public CustomUserDetails(Long userId, String email, String password, String role, Long partnerId) {
+    public CustomUserDetails(Long userId, String email, String password, String role, Long partnerId, Long adminId) {
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.role = role;
         this.partnerId = partnerId;
+        this.adminId = adminId;
     }
 
     @Override

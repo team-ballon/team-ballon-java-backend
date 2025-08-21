@@ -70,10 +70,8 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Access Token 재발급 성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = JwtResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Refresh Token이 유효하지 않음",
-                    content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음",
-                    content = @Content)
+            @ApiResponse(responseCode = "401", description = "Refresh Token이 유효하지 않음"),
+            @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
     })
     @PostMapping("/refresh")
     public JwtResponse refresh(@RequestHeader("Authorization") String refreshToken) {
