@@ -53,8 +53,7 @@ public class AdminServiceImpl implements AdminService {
                 sort
         );
 
-        return adminRepository.search(req, sortedPageable)
-                .map(AdminResponse::from);
+        return adminRepository.search(req, sortedPageable);
     }
 
 
