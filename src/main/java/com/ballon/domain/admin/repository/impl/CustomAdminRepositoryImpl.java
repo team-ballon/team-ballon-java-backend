@@ -1,10 +1,12 @@
 package com.ballon.domain.admin.repository.impl;
 
+import com.ballon.domain.admin.dto.AdminResponse;
 import com.ballon.domain.admin.dto.AdminSearchRequest;
 import com.ballon.domain.admin.entity.Admin;
 import com.ballon.domain.admin.entity.QAdmin;
 import com.ballon.domain.admin.entity.QAdminPermission;
 import com.ballon.domain.admin.repository.CustomAdminRepository;
+import com.ballon.global.common.response.ResponseMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.Wildcard;
@@ -24,7 +26,7 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Admin> search(AdminSearchRequest req, Pageable pageable) {
+    public Page<AdminResponse> search(AdminSearchRequest req, Pageable pageable) {
         QAdmin admin = QAdmin.admin;
         QAdminPermission adminPermission = QAdminPermission.adminPermission;
 
@@ -43,15 +45,21 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
         }
 
         // Content
-        List<Admin> content = queryFactory
+        List<Admin> admins = queryFactory
                 .selectFrom(admin)
                 .leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
+                .leftJoin(adminPermission.permission).fetchJoin() // Permission까지 조인
                 .where(builder)
                 .distinct()
                 .orderBy(getOrderSpecifier(req.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
+        List<AdminResponse> content = admins.stream()
+                .map(ResponseMapper::toAdminResponse)
+                .toList();
+
 
         // Count
         Long total = queryFactory
