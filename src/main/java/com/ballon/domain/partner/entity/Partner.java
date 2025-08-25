@@ -36,11 +36,12 @@ public class Partner {
     @Column(nullable = false, length = 30)
     private String partnerEmail;
 
-    public static Partner createPartner(String name, String overview, String email) {
+    public static Partner createPartner(String name, String overview, String email, User user) {
         return Partner.builder()
                 .partnerName(name)
                 .overview(overview)
                 .partnerEmail(email)
+                .user(user)
                 .build();
     }
 

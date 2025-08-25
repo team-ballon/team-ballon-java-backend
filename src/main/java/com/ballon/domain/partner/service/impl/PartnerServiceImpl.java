@@ -11,6 +11,7 @@ import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.entity.type.Role;
+import com.ballon.domain.user.repository.UserRepository;
 import com.ballon.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class PartnerServiceImpl implements PartnerService {
     private final PartnerRepository partnerRepository;
     private final PartnerCategoryRepository partnerCategoryRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @Override
     public PartnerResponse partnerRegister(PartnerRegisterRequest partnerRegisterRequest) {
@@ -48,7 +50,8 @@ public class PartnerServiceImpl implements PartnerService {
         Partner partner = Partner.createPartner(
                 partnerRegisterRequest.getPartnerName(),
                 partnerRegisterRequest.getOverview(),
-                partnerRegisterRequest.getPartnerEmail()
+                partnerRegisterRequest.getPartnerEmail(),
+                userRepository.getReferenceById(userResponse.getUserId())
         );
         partnerRepository.save(partner);
         log.info("파트너 엔티티 저장 완료 - partnerId: {}, partnerName: {}", partner.getPartnerId(), partner.getPartnerName());
