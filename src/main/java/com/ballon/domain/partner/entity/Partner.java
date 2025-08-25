@@ -25,29 +25,34 @@ public class Partner {
     private User user;
 
     @Column(length = 50, nullable = false)
-    private String name;
+    private String partnerName;
 
-    @Column(nullable = false, columnDefinition = "TINYINT(1)")
+    @Column(nullable = false)
     private Boolean active;
 
     @Column(columnDefinition = "TEXT")
     private String overview;
 
     @Column(nullable = false, length = 30)
-    private String email;
+    private String partnerEmail;
 
     public static Partner createPartner(String name, String overview, String email) {
         return Partner.builder()
-                .name(name)
+                .partnerName(name)
                 .overview(overview)
-                .email(email)
+                .partnerEmail(email)
                 .build();
     }
 
     // 입점업체 정보 업데이트
     public void updatePartner(String name, String overview, String email) {
-        this.name = name;
+        this.partnerName = name;
         this.overview = overview;
-        this.email = email;
+        this.partnerEmail = email;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.active = false;
     }
 }
