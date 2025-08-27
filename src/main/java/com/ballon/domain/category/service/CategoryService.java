@@ -1,9 +1,10 @@
 package com.ballon.domain.category.service;
 
+import com.ballon.domain.category.dto.CategoryRequest;
+import com.ballon.global.cache.CategoryCacheStore;
+
 public interface CategoryService {
-    Long createCategory(String name, Long parentId);
+    CategoryCacheStore.Node createCategory(CategoryRequest categoryRequest);
 
-    void renameCategory(Long id, String newName);
-
-    void deleteCategory(Long id);
+    void deleteCategory(Long categoryId);
 }
