@@ -45,10 +45,10 @@ public class CategoryController {
     @Operation(summary = "자식 카테고리 조회", description = "parentId에 해당하는 자식 카테고리들을 반환합니다.")
     @ApiResponse(responseCode = "200", description = "성공",
             content = @Content(schema = @Schema(implementation = CategoryCacheStore.Node.class)))
-    @GetMapping("/{parentId}/children")
+    @GetMapping("/{parent-id}/children")
     public List<CategoryCacheStore.Node> children(
             @Parameter(description = "부모 카테고리 ID", example = "1")
-            @PathVariable Long parentId) {
+            @PathVariable("parent-id") Long parentId) {
         return categoryReadService.getChildrenOf(parentId);
     }
 
