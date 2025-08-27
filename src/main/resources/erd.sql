@@ -12,12 +12,12 @@ CREATE TABLE "user" (
 );
 
 CREATE TABLE verification_code (
-                                   id BIGSERIAL PRIMARY KEY,          -- PK (자동 증가)
-                                   email VARCHAR(255) NOT NULL,       -- 인증 대상 이메일
-                                   code VARCHAR(20) NOT NULL,         -- 인증 코드
-                                   expires_at TIMESTAMP NOT NULL,     -- 만료 시각
-                                   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                   used BOOLEAN NOT NULL DEFAULT FALSE
+                                   "id" BIGSERIAL PRIMARY KEY,          -- PK (자동 증가)
+                                   "email" VARCHAR(255) NOT NULL,       -- 인증 대상 이메일
+                                   "code" VARCHAR(20) NOT NULL,         -- 인증 코드
+                                   "expires_at" TIMESTAMP NOT NULL,     -- 만료 시각
+                                   "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                   "used" BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX idx_verification_email_code
@@ -67,12 +67,12 @@ CREATE TABLE "partner" (
 
 CREATE TABLE "address" (
                            "address_id" SERIAL PRIMARY KEY,
-                           name VARCHAR(100) NOT NULL, -- 배송지명 (예: 우리집, 회사)
-                           recipient VARCHAR(50) NOT NULL,    -- 수령인
-                           contact_number VARCHAR(20) NOT NULL, -- 연락처
-                           base_address VARCHAR(255) NOT NULL,     -- 주소
-                           detail_address VARCHAR(255),       -- 상세주소 (필수 아닐 수 있음)
-                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 생성일시
+                           "name" VARCHAR(100) NOT NULL, -- 배송지명 (예: 우리집, 회사)
+                           "recipient" VARCHAR(50) NOT NULL,    -- 수령인
+                           "contact_number" VARCHAR(20) NOT NULL, -- 연락처
+                           "base_address" VARCHAR(255) NOT NULL,     -- 주소
+                           "detail_address" VARCHAR(255),       -- 상세주소 (필수 아닐 수 있음)
+                           "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 생성일시
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -85,7 +85,6 @@ CREATE TABLE "product" (
                            "product_id" SERIAL PRIMARY KEY,
                            "name" VARCHAR(50) NOT NULL,
                            "price" INTEGER NOT NULL,
-                           "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK')),
                            "quantity" INTEGER NOT NULL,
                            "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id"),
                            "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
@@ -93,7 +92,7 @@ CREATE TABLE "product" (
 
 CREATE TABLE "coupon" (
                           "coupon_id" SERIAL PRIMARY KEY,
-                          "field" VARCHAR(255),
+                          "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('PERCENT', 'FIXED')),
                           "event_id" INTEGER NOT NULL REFERENCES "event" ("event_id"),
                           "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
@@ -113,7 +112,7 @@ CREATE TABLE "orders" (
 CREATE TABLE "partner_category" (
                                     "partner_category_id" SERIAL PRIMARY KEY,
                                     "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
-                                    "category_id2" INTEGER NOT NULL REFERENCES "category" ("category_id")
+                                    "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id")
 );
 
 CREATE TABLE "cart_product" (
@@ -171,10 +170,10 @@ CREATE TABLE "ai_report" (
 CREATE TABLE "product_application" (
                                        "product_application_id" SERIAL PRIMARY KEY,
                                        "name" VARCHAR(200) NOT NULL,
-                                       "status" VARCHAR(20) NOT NULL,
+                                       "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('ACTIVE', 'INACTIVE')),
                                        "quantity" INTEGER NOT NULL,
                                        "price" INTEGER NOT NULL,
-                                       "type" VARCHAR(20) NOT NULL,
+                                       "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('CREATE', 'UPDATE', 'REMOVE')),
                                        "application_date" TIMESTAMP NOT NULL,
                                        "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
@@ -182,12 +181,12 @@ CREATE TABLE "product_application" (
 CREATE TABLE "coupon_product" (
                                   "coupon_product_id" SERIAL PRIMARY KEY,
                                   "coupon_id" INTEGER NOT NULL REFERENCES "coupon" ("coupon_id"),
-                                  "product_id2" INTEGER NOT NULL REFERENCES "product" ("product_id")
+                                  "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
 CREATE TABLE "order_product" (
                                  "order_product_id" SERIAL PRIMARY KEY,
-                                 "product_id2" INTEGER NOT NULL REFERENCES "product" ("product_id"),
+                                 "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
                                  "order_id" INTEGER NOT NULL REFERENCES "orders" ("order_id")
 );
 
