@@ -41,6 +41,25 @@ public class AdminServiceImpl implements AdminService {
     private final PermissionRepository permissionRepository;
 
     @Transactional(readOnly = true)
+    public AdminResponse getAdminByAdminId(Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
+
+        return new AdminResponse(
+                admin.getAdminId(),
+                admin.getUser().getEmail(),
+                admin.getRole(),
+                admin.getAdminPermissions().stream()
+                        .map(ap -> new PermissionResponse(
+                                ap.getPermission().getPermissionId(),
+                                ap.getPermission().getName(),
+                                ap.getPermission().getDescription()
+                        ))
+                        .toList()
+        );
+    }
+
+    @Transactional(readOnly = true)
     @Override
     public Page<AdminResponse> searchAdmins(AdminSearchRequest req, Pageable pageable) {
         Sort sort = "oldest".equals(req.getSort())
