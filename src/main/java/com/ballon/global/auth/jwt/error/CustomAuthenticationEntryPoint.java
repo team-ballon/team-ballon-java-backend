@@ -35,9 +35,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        // 공통 에러 응답 객체 생성 (code: "UNAUTHORIZED", message: "인증이 필요합니다.")
+        // 공통 에러 응답 객체 생성 (code: "UNAUTHORIZED", message: "Authentication is required.")
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                "인증이 필요합니다.", HttpStatus.UNAUTHORIZED.value());
+                "Authentication is required.", HttpStatus.UNAUTHORIZED.value());
 
         // 응답 헤더에 JSON 콘텐츠 타입 설정
         response.setContentType("application/json");
