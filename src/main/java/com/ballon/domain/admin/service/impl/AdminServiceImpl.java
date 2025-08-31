@@ -103,14 +103,18 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public AdminResponse updateAdmin(Long adminId, AdminUpdateRequest adminUpdateRequest) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
 
+        // 역할 수정
         admin.updateRole(adminUpdateRequest.getRoleName());
 
+        // 기존 권한 제거 (orphanRemoval 덕분에 DB에서도 삭제됨)
         admin.getAdminPermissions().removeIf(ap -> true);
 
+        // 새 권한 추가
         List<Permission> permissions = permissionRepository.findAllById(adminUpdateRequest.getPermissionIds());
         for (Permission permission : permissions) {
             admin.getAdminPermissions().add(
@@ -121,8 +125,6 @@ public class AdminServiceImpl implements AdminService {
                     )
             );
         }
-
-        adminRepository.save(admin);
 
         return new AdminResponse(
                 admin.getAdminId(),
@@ -137,6 +139,7 @@ public class AdminServiceImpl implements AdminService {
                         .toList()
         );
     }
+
 
     @Override
     public void removeAdmin(Long adminId) {
