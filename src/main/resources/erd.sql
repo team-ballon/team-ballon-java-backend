@@ -8,7 +8,7 @@ CREATE TABLE "user" (
                         "role" VARCHAR(20) NOT NULL CHECK ("role" IN ('USER', 'PARTNER', 'ADMIN')),
                         "age" SMALLINT,
                         "refresh_token" VARCHAR(50),
-                        "created_at" TIMESTAMP NOT NULL
+                        "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE verification_code (
@@ -43,7 +43,7 @@ CREATE TABLE "event" (
                          "event_id" SERIAL PRIMARY KEY,
                          "title" VARCHAR(100) NOT NULL,
                          "description" TEXT NOT NULL,
-                         "start_date" TIMESTAMP NOT NULL,
+                         "start_date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          "end_date" TIMESTAMP NOT NULL
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE "admin" (
                          "admin_id" SERIAL PRIMARY KEY,
                          "is_super_admin" BOOLEAN NOT NULL,
                          "role" VARCHAR(100) NOT NULL,
-                         "created_at" TIMESTAMP NOT NULL,
+                         "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE "orders" (
                           "status" VARCHAR(20) NOT NULL,
                           "payment_key" VARCHAR(200),
                           "paid_at" TIMESTAMP,
-                          "created_at" TIMESTAMP NOT NULL,
+                          "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
                           "address_id" INTEGER NOT NULL REFERENCES "address" ("address_id")
 );
