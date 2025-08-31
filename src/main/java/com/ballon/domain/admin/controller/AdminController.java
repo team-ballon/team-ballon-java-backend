@@ -51,7 +51,7 @@ public class AdminController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "관리자 조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponse.class)))),
+                    content = @Content(schema = @Schema(implementation = AdminResponse.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @CheckSuperAdmin
