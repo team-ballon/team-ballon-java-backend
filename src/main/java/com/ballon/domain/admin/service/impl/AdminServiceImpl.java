@@ -113,6 +113,7 @@ public class AdminServiceImpl implements AdminService {
 
         // 기존 권한 제거 (orphanRemoval 덕분에 DB에서도 삭제됨)
         admin.getAdminPermissions().removeIf(ap -> true);
+        adminRepository.flush();
 
         // 새 권한 추가
         List<Permission> permissions = permissionRepository.findAllById(adminUpdateRequest.getPermissionIds());
