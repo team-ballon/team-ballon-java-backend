@@ -4,6 +4,7 @@ import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.admin.dto.*;
 import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
+import com.ballon.global.UserUtil;
 import com.ballon.global.common.aop.CheckSuperAdmin;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -31,12 +32,26 @@ public class AdminController {
     private final PermissionService permissionService;
 
     @Operation(
+            summary = "관리자 본인 정보 조회",
+            description = "관리자 본인의 정보를 조회할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "관리자 본인 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponse.class)))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @GetMapping("/me")
+    public AdminResponse getAdminByAdminId() {
+        return adminService.getAdminByAdminId(UserUtil.getAdminId());
+    }
+
+    @Operation(
             summary = "관리자 조회",
             description = "기존 관리자를 조회합니다. 슈퍼 관리자가 다른 관리자를 조회할 때 사용합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "관리자 조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponse.class)))),
+                    content = @Content(schema = @Schema(implementation = AdminResponse.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @CheckSuperAdmin
