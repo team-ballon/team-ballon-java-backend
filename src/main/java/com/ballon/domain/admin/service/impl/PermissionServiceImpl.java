@@ -23,6 +23,7 @@ public class PermissionServiceImpl implements PermissionService {
     private final PermissionRepository permissionRepository;
     private final AdminPermissionRepository adminPermissionRepository;
 
+    @Transactional(readOnly = true)
     @Override
     public List<PermissionResponse> findAllPermissions() {
         return permissionRepository.findAll().stream().map(p -> new PermissionResponse(

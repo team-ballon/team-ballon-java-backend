@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AdminService {
+    AdminResponse getAdminByAdminId(Long adminId);
+
     Page<AdminResponse> searchAdmins(AdminSearchRequest req, Pageable pageable);
 
     AdminResponse createAdmin(AdminRequest adminRequest);
