@@ -35,7 +35,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             trainerId = partnerRepository.findPartnerIdByUserId(userId)
                     .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
         } else if(Role.ADMIN == user.getRole()){
-            adminId = adminRepository.findAdminIdByUser_UserId(userId)
+            adminId = adminRepository.findAdminIdByUserId(userId)
                     .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found.", userId)));
         }
 
