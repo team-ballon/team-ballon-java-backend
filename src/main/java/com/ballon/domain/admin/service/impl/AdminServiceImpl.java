@@ -109,7 +109,7 @@ public class AdminServiceImpl implements AdminService {
 
         admin.updateRole(adminUpdateRequest.getRoleName());
 
-        admin.getAdminPermissions().clear();
+        admin.getAdminPermissions().removeIf(ap -> true);
 
         List<Permission> permissions = permissionRepository.findAllById(adminUpdateRequest.getPermissionIds());
         for (Permission permission : permissions) {
