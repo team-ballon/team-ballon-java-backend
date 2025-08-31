@@ -51,4 +51,9 @@ public class Admin {
                 .role(role)
                 .build();
     }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDate.now();
+    }
 }
