@@ -24,6 +24,15 @@ public class PermissionServiceImpl implements PermissionService {
     private final AdminPermissionRepository adminPermissionRepository;
 
     @Override
+    public List<PermissionResponse> findAllPermissions() {
+        return permissionRepository.findAll().stream().map(p -> new PermissionResponse(
+                p.getPermissionId(),
+                p.getName(),
+                p.getDescription()
+        )).toList();
+    }
+
+    @Override
     public List<PermissionResponse> assignPermission(List<Long> permissionIds, Admin admin) {
         // 어드민 - 권한 연결
         List<AdminPermission> adminPermissions = new ArrayList<>();
