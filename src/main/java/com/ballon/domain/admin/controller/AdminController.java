@@ -1,11 +1,9 @@
 package com.ballon.domain.admin.controller;
 
 import com.ballon.domain.address.dto.AddressResponse;
-import com.ballon.domain.admin.dto.AdminRequest;
-import com.ballon.domain.admin.dto.AdminResponse;
-import com.ballon.domain.admin.dto.AdminSearchRequest;
-import com.ballon.domain.admin.dto.AdminUpdateRequest;
+import com.ballon.domain.admin.dto.*;
 import com.ballon.domain.admin.service.AdminService;
+import com.ballon.domain.admin.service.PermissionService;
 import com.ballon.global.common.aop.CheckSuperAdmin;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -30,6 +28,7 @@ import java.util.List;
 @Tag(name = "관리자 API", description = "관리자 RBAC, 관리자 관련 API")
 public class AdminController {
     private final AdminService adminService;
+    private final PermissionService permissionService;
 
     @Operation(
             summary = "관리자 조회",
@@ -103,5 +102,21 @@ public class AdminController {
         adminService.removeAdmin(adminId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "모든 권한 조회",
+            description = "모든 권한을 조회합니다. 슈퍼 관리자가 다른 관리자를 생성할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PermissionResponse.class)))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckSuperAdmin
+    @DeleteMapping("/permissions")
+    public List<PermissionResponse> findAllPermissions() {
+
+        return permissionService.findAllPermissions();
     }
 }
