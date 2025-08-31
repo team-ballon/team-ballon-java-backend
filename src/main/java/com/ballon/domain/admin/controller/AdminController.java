@@ -114,7 +114,7 @@ public class AdminController {
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @CheckSuperAdmin
-    @DeleteMapping("/permissions")
+    @GetMapping("/permissions")
     public List<PermissionResponse> findAllPermissions() {
 
         return permissionService.findAllPermissions();
