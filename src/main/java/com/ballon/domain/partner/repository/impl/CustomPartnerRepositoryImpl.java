@@ -37,7 +37,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
         }
 
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
-            builder.and(partner.email.containsIgnoreCase(req.getEmail()));
+            builder.and(partner.partnerEmail.containsIgnoreCase(req.getEmail()));
         }
 
         if (req.getActive() != null) {
@@ -64,7 +64,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
                 .map(p -> new PartnerResponse(
                         p.getUser().getUserId(),
                         p.getPartnerId(),
-                        p.getEmail(),
+                        p.getPartnerEmail(),
                         p.getUser().getName(),
                         p.getOverview(),
                         p.getName(),
@@ -95,7 +95,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
         return switch (sort.toLowerCase()) {
             case "oldest" -> partner.partnerId.asc();
             case "name" -> partner.name.asc();
-            case "email" -> partner.email.asc();
+            case "email" -> partner.partnerEmail.asc();
             default -> partner.partnerId.desc();
         };
     }

@@ -70,7 +70,7 @@ public class PartnerServiceImpl implements PartnerService {
         PartnerResponse response = new PartnerResponse(
                 userResponse.getUserId(),
                 partner.getPartnerId(),
-                partner.getEmail(),
+                partner.getPartnerEmail(),
                 userResponse.getName(),
                 partner.getOverview(),
                 partner.getName(),
@@ -109,7 +109,7 @@ public class PartnerServiceImpl implements PartnerService {
         return new PartnerResponse(
                 partner.getUser().getUserId(),
                 partner.getPartnerId(),
-                partner.getEmail(),
+                partner.getPartnerEmail(),
                 partner.getUser().getName(),
                 partner.getName(),
                 partner.getOverview(),

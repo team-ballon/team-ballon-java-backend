@@ -38,7 +38,7 @@ public class Partner {
     private String overview;
 
     @Column(nullable = false, length = 30)
-    private String email;
+    private String partnerEmail;
 
     @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PartnerCategory> partnerCategory = new HashSet<>();
@@ -47,15 +47,15 @@ public class Partner {
         return Partner.builder()
                 .name(name)
                 .overview(overview)
-                .email(email)
+                .partnerEmail(email)
                 .build();
     }
 
     // 입점업체 정보 업데이트
-    public void updatePartner(String name, String overview, String email) {
+    public void updatePartner(String name, String overview, String partnerEmail) {
         this.name = name;
         this.overview = overview;
-        this.email = email;
+        this.partnerEmail = partnerEmail;
     }
 
     public void updateActive(Boolean active) {
