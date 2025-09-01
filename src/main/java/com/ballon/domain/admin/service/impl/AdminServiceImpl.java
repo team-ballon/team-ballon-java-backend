@@ -9,6 +9,7 @@ import com.ballon.domain.admin.repository.AdminRepository;
 import com.ballon.domain.admin.repository.PermissionRepository;
 import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
+import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.entity.User;
@@ -39,6 +40,7 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final PermissionService permissionService;
     private final PermissionRepository permissionRepository;
+    private final PartnerService partnerService;
 
     @Transactional(readOnly = true)
     public AdminResponse getAdminByAdminId(Long adminId) {
@@ -143,13 +145,11 @@ public class AdminServiceImpl implements AdminService {
 
 
     @Override
-    public void removeAdmin(Long adminId) {
-        if(!adminRepository.existsById(adminId)) {
-            throw new NotFoundException("존재하지 않는 관리자.");
-        }
-
-        Admin admin = adminRepository.getReferenceById(adminId);
+    public void removeAdminByAdminId(Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
 
         adminRepository.delete(admin);
+        userRepository.deleteById(admin.getUser().getUserId());
     }
 }

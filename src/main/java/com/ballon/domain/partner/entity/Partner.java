@@ -1,8 +1,12 @@
 package com.ballon.domain.partner.entity;
 
+import com.ballon.domain.admin.entity.AdminPermission;
 import com.ballon.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "partner")
@@ -36,6 +40,9 @@ public class Partner {
     @Column(nullable = false, length = 30)
     private String email;
 
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PartnerCategory> partnerCategory = new HashSet<>();
+
     public static Partner createPartner(String name, String overview, String email) {
         return Partner.builder()
                 .name(name)
@@ -49,5 +56,14 @@ public class Partner {
         this.name = name;
         this.overview = overview;
         this.email = email;
+    }
+
+    public void updateActive(Boolean active) {
+        this.active = active;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.active = false;
     }
 }

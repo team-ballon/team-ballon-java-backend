@@ -2,11 +2,20 @@ package com.ballon.domain.admin.controller;
 
 import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.admin.dto.*;
+import com.ballon.domain.admin.entity.type.PermissionType;
 import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
+import com.ballon.domain.category.dto.CreateCategoryRequest;
+import com.ballon.domain.category.service.CategoryService;
+import com.ballon.domain.partner.dto.PartnerResponse;
+import com.ballon.domain.partner.dto.PartnerSearchRequest;
+import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.global.UserUtil;
+import com.ballon.global.cache.CategoryCacheStore;
+import com.ballon.global.common.aop.CheckPermission;
 import com.ballon.global.common.aop.CheckSuperAdmin;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,6 +39,8 @@ import java.util.List;
 public class AdminController {
     private final AdminService adminService;
     private final PermissionService permissionService;
+    private final PartnerService partnerService;
+    private final CategoryService categoryService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -57,14 +68,10 @@ public class AdminController {
     @CheckSuperAdmin
     @GetMapping
     public ResponseEntity<Page<AdminResponse>> searchAdmins(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) List<Long> permissionIds,
-            @RequestParam(defaultValue = "latest") String sort,
+            @Parameter(description = "검색 조건") AdminSearchRequest adminSearchRequest,
             Pageable pageable
     ) {
-        AdminSearchRequest req = new AdminSearchRequest(email, role, permissionIds, sort);
-        return ResponseEntity.ok(adminService.searchAdmins(req, pageable));
+        return ResponseEntity.ok(adminService.searchAdmins(adminSearchRequest, pageable));
     }
 
 
@@ -114,7 +121,7 @@ public class AdminController {
     @CheckSuperAdmin
     @DeleteMapping("/{admin-id}")
     public ResponseEntity<Void> removeAdmin(@PathVariable("admin-id") Long adminId) {
-        adminService.removeAdmin(adminId);
+        adminService.removeAdminByAdminId(adminId);
 
         return ResponseEntity.noContent().build();
     }
@@ -133,5 +140,67 @@ public class AdminController {
     public List<PermissionResponse> findAllPermissions() {
 
         return permissionService.findAllPermissions();
+    }
+
+    @Operation(
+            summary = "입점업체 검색",
+            description = "이름, 이메일, 활성여부, 카테고리 조건으로 입점업체를 검색합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "검색 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @GetMapping("/search")
+    public Page<PartnerResponse> searchPartners(
+            @Parameter(description = "검색 조건") PartnerSearchRequest condition,
+            Pageable pageable
+    ) {
+        return partnerService.searchPartners(condition, pageable);
+    }
+
+    @Operation(
+            summary = "입점업체 활성/비활성",
+            description = "입점업체를 활성/비활성합니다. 입점업체 관리 권한을 가진 관리자가 입점업체를 활성/비활성 할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "입점업체 삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_PARTNER)
+    @PutMapping("/partner/{partner-id}/active")
+    public ResponseEntity<Void> activePartner(@PathVariable("partner-id") Long partnerId, @RequestBody Boolean active) {
+        partnerService.activePartnerByPartnerId(partnerId, active);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "카테고리 생성",
+            description = "카테고리를 생성합니다. 카테고리 관리 권한을 가진 관리자가 카테고리를 생성 할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "카테고리 생성 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_CATEGORY)
+    @PostMapping("/categories")
+    public CategoryCacheStore.Node createCategory(@RequestBody CreateCategoryRequest categoryRequest) {
+        return categoryService.createCategory(categoryRequest);
+    }
+
+    @Operation(
+            summary = "카테고리 삭제",
+            description = "카테고리를 삭제합니다. 카테고리 관리 권한을 가진 관리자가 카테고리를 삭제 할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "카테고리 삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_CATEGORY)
+    @PostMapping("/categories/{category-id}")
+    public ResponseEntity<Void> createCategory(@PathVariable("category-id") Long categoryId) {
+         categoryService.deleteCategory(categoryId);
+
+         return ResponseEntity.noContent().build();
     }
 }

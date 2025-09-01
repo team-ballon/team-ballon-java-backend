@@ -87,7 +87,7 @@ CREATE TABLE "product" (
                            "price" INTEGER NOT NULL,
                            "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK')),
                            "quantity" INTEGER NOT NULL,
-                           "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id"),
+                           "category_id" INTEGER REFERENCES "category" ("category_id") ON DELETE SET NULL,
                            "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
 

@@ -1,9 +1,16 @@
 package com.ballon.domain.category.service;
 
-public interface CategoryService {
-    Long createCategory(String name, Long parentId);
+import com.ballon.domain.category.dto.CategoryResponse;
+import com.ballon.domain.category.dto.CreateCategoryRequest;
+import com.ballon.domain.partner.entity.Partner;
+import com.ballon.global.cache.CategoryCacheStore;
 
-    void renameCategory(Long id, String newName);
+import java.util.List;
+
+public interface CategoryService {
+    CategoryCacheStore.Node createCategory(CreateCategoryRequest createCategoryRequest);
 
     void deleteCategory(Long id);
+
+    List<CategoryResponse> assignPartnerCategory(List<Long> categoryIds, Partner partner);
 }

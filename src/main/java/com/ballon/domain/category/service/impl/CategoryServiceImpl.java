@@ -1,46 +1,43 @@
 package com.ballon.domain.category.service.impl;
 
+import com.ballon.domain.category.dto.CategoryResponse;
+import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.entity.Category;
 import com.ballon.domain.category.repository.CategoryRepository;
 import com.ballon.domain.category.service.CategoryService;
+import com.ballon.domain.partner.entity.Partner;
+import com.ballon.domain.partner.entity.PartnerCategory;
+import com.ballon.domain.partner.repository.PartnerCategoryRepository;
 import com.ballon.global.cache.CategoryCacheStore;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository repo;
     private final CategoryCacheStore cache;
+    private final PartnerCategoryRepository partnerCategoryRepository;
 
     @Override
-    public Long createCategory(String name, Long parentId) {
-        Category parent = (parentId != null) ? repo.getReferenceById(parentId) : null;
-        Category c = Category.builder().name(name).parent(parent).build();
+    public CategoryCacheStore.Node createCategory(CreateCategoryRequest createCategoryRequest) {
+        Category parent = (createCategoryRequest.getParentId() != null) ? repo.getReferenceById(createCategoryRequest.getParentId()) : null;
+        Category c = Category.builder().name(createCategoryRequest.getName()).parent(parent).build();
         repo.saveAndFlush(c); // ID 확보
 
         // 커밋 후 캐시에 반영
         afterCommit(() -> cache.onCreated(c.getCategoryId(), c.getName(),
                 parent == null ? null : parent.getCategoryId()));
-        return c.getCategoryId();
-    }
-
-    @Override
-    public void renameCategory(Long id, String newName) {
-        Category c = repo.getReferenceById(id);
-        // TODO : category DB기능 추가
-        // 엔티티 변경 메서드가 없다면 추가: c.changeName(newName);
-        // 임시로 리플렉션/필드 접근 대신 전용 메서드를 엔티티에 추가하는 걸 권장
-        // 여기서는 가독성 위해 직접 세터 메서드가 있다고 가정
-        // c.setName(newName);
-
-        // JPA Dirty Checking에 의해 flush 시 DB 반영
-        afterCommit(() -> cache.onRenamed(id, newName));
+        return cache.getById(c.getCategoryId());
     }
 
     @Override
@@ -49,6 +46,30 @@ public class CategoryServiceImpl implements CategoryService {
         repo.deleteById(id);
 
         afterCommit(() -> cache.onDeleted(id));
+    }
+
+    @Override
+    public List<CategoryResponse> assignPartnerCategory(List<Long> categoryIds, Partner partner) {
+        List<PartnerCategory> partnerCategories =
+                categoryIds
+                        .stream()
+                        .map(categoryId -> PartnerCategory.of(
+                                partner,
+                                Category.builder()
+                                        .categoryId(categoryId)
+                                        .build()
+                        ))
+                        .toList();
+        log.debug("파트너 카테고리 매핑 생성: 총 {}건", partnerCategories.size());
+
+        partnerCategoryRepository.saveAll(partnerCategories);
+        log.info("파트너 카테고리 저장 완료");
+
+        return partnerCategories.stream()
+                .map(pc -> new CategoryResponse(
+                        pc.getCategory().getCategoryId(),
+                        pc.getCategory().getName()
+                )).toList();
     }
 
     private void afterCommit(Runnable r) {

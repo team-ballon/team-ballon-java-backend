@@ -16,5 +16,5 @@ public interface AdminService {
 
     AdminResponse updateAdmin(Long adminId, AdminUpdateRequest adminUpdateRequest);
 
-    void removeAdmin(Long adminId);
+    void removeAdminByAdminId(Long adminId);
 }
