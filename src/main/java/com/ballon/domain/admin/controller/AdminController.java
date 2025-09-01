@@ -66,7 +66,7 @@ public class AdminController {
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @CheckSuperAdmin
-    @GetMapping
+    @GetMapping("/search")
     public ResponseEntity<Page<AdminResponse>> searchAdmins(
             @Parameter(description = "검색 조건") AdminSearchRequest adminSearchRequest,
             Pageable pageable
@@ -150,7 +150,7 @@ public class AdminController {
             @ApiResponse(responseCode = "200", description = "검색 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    @GetMapping("/search")
+    @GetMapping("/partner/search")
     public Page<PartnerResponse> searchPartners(
             @Parameter(description = "검색 조건") PartnerSearchRequest condition,
             Pageable pageable
