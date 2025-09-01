@@ -9,7 +9,6 @@ import com.ballon.domain.partner.entity.QPartnerCategory;
 import com.ballon.domain.partner.repository.CustomPartnerRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,21 +43,30 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
             builder.and(partner.active.eq(req.getActive()));
         }
 
-        if (req.getCategoryIds() != null && !req.getCategoryIds().isEmpty()) {
+        boolean hasCategoryFilter = req.getCategoryIds() != null && !req.getCategoryIds().isEmpty();
+        if (hasCategoryFilter) {
             builder.and(partnerCategory.category.categoryId.in(req.getCategoryIds()));
         }
 
         // Content
-        List<Partner> partners = queryFactory
+        var query = queryFactory
                 .selectFrom(partner)
-                .leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
-                .leftJoin(partnerCategory.category).fetchJoin() // 카테고리까지 조인
-                .where(builder)
                 .distinct()
                 .orderBy(getOrderSpecifier(req.getSort(), partner))
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                .limit(pageable.getPageSize());
+
+        if (hasCategoryFilter) {
+            query.innerJoin(partner.partnerCategory, partnerCategory).fetchJoin()
+                    .innerJoin(partnerCategory.category).fetchJoin()
+                    .where(builder);
+        } else {
+            query.leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
+                    .leftJoin(partnerCategory.category).fetchJoin()
+                    .where(builder);
+        }
+
+        List<Partner> partners = query.fetch();
 
         List<PartnerResponse> content = partners.stream()
                 .map(p -> new PartnerResponse(
@@ -72,16 +80,17 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
                                 .map(pc -> new CategoryResponse(
                                         pc.getCategory().getCategoryId(),
                                         pc.getCategory().getName()
-                                )).toList()
-                )).toList();
+                                ))
+                                .toList()
+                ))
+                .toList();
 
-        // Count
+        // Count (fetchJoin 제거 + countDistinct)
         Long total = queryFactory
-                .select(Wildcard.count)
+                .select(partner.partnerId.countDistinct())
                 .from(partner)
-                .leftJoin(partner.partnerCategory, partnerCategory)
+                .leftJoin(partner.partnerCategory, partnerCategory) // 여기선 leftJoin만
                 .where(builder)
-                .distinct()
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
