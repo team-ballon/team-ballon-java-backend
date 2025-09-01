@@ -29,7 +29,7 @@ public class Partner {
     private User user;
 
     @Column(length = 50, nullable = false)
-    private String name;
+    private String partnerName;
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private Boolean active;
@@ -43,17 +43,17 @@ public class Partner {
     @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PartnerCategory> partnerCategory = new HashSet<>();
 
-    public static Partner createPartner(String name, String overview, String email) {
+    public static Partner createPartner(String partnerName, String overview, String email) {
         return Partner.builder()
-                .name(name)
+                .partnerName(partnerName)
                 .overview(overview)
                 .partnerEmail(email)
                 .build();
     }
 
     // 입점업체 정보 업데이트
-    public void updatePartner(String name, String overview, String partnerEmail) {
-        this.name = name;
+    public void updatePartner(String partnerName, String overview, String partnerEmail) {
+        this.partnerName = partnerName;
         this.overview = overview;
         this.partnerEmail = partnerEmail;
     }

@@ -33,7 +33,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
         BooleanBuilder builder = new BooleanBuilder();
 
         if (req.getName() != null && !req.getName().isBlank()) {
-            builder.and(partner.name.containsIgnoreCase(req.getName()));
+            builder.and(partner.partnerName.containsIgnoreCase(req.getName()));
         }
 
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
@@ -67,7 +67,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
                         p.getPartnerEmail(),
                         p.getUser().getName(),
                         p.getOverview(),
-                        p.getName(),
+                        p.getPartnerName(),
                         p.getPartnerCategory().stream()
                                 .map(pc -> new CategoryResponse(
                                         pc.getCategory().getCategoryId(),
@@ -94,7 +94,7 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
 
         return switch (sort.toLowerCase()) {
             case "oldest" -> partner.partnerId.asc();
-            case "name" -> partner.name.asc();
+            case "name" -> partner.partnerName.asc();
             case "email" -> partner.partnerEmail.asc();
             default -> partner.partnerId.desc();
         };

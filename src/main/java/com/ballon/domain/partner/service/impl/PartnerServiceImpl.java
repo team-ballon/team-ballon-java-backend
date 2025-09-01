@@ -65,7 +65,7 @@ public class PartnerServiceImpl implements PartnerService {
                 partnerRegisterRequest.getPartnerEmail()
         );
         partnerRepository.save(partner);
-        log.info("파트너 엔티티 저장 완료 - partnerId: {}, partnerName: {}", partner.getPartnerId(), partner.getName());
+        log.info("파트너 엔티티 저장 완료 - partnerId: {}, partnerName: {}", partner.getPartnerId(), partner.getPartnerName());
 
         PartnerResponse response = new PartnerResponse(
                 userResponse.getUserId(),
@@ -73,7 +73,7 @@ public class PartnerServiceImpl implements PartnerService {
                 partner.getPartnerEmail(),
                 userResponse.getName(),
                 partner.getOverview(),
-                partner.getName(),
+                partner.getPartnerName(),
                 categoryService.assignPartnerCategory(partnerRegisterRequest.getCategoryIds(), partner)
         );
         log.info("파트너 등록 처리 완료: {}", response);
@@ -111,7 +111,7 @@ public class PartnerServiceImpl implements PartnerService {
                 partner.getPartnerId(),
                 partner.getPartnerEmail(),
                 partner.getUser().getName(),
-                partner.getName(),
+                partner.getPartnerName(),
                 partner.getOverview(),
                 categories.stream()
                         .map(c -> new CategoryResponse(
