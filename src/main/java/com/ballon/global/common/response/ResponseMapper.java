@@ -20,13 +20,13 @@ public class ResponseMapper {
                 admin.getAdminId(),
                 admin.getUser().getEmail(),
                 admin.getRole(),
+                admin.getCreatedAt(),
                 admin.getAdminPermissions().stream()
                         .map(ap -> new PermissionResponse(
                                 ap.getPermission().getPermissionId(),
                                 ap.getPermission().getName(),
                                 ap.getPermission().getDescription()
-                        ))
-                        .toList()
+                        )).toList()
         );
     }
 }

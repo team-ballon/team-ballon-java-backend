@@ -20,9 +20,7 @@ import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +49,7 @@ public class AdminServiceImpl implements AdminService {
                 admin.getAdminId(),
                 admin.getUser().getEmail(),
                 admin.getRole(),
+                admin.getCreatedAt(),
                 admin.getAdminPermissions().stream()
                         .map(ap -> new PermissionResponse(
                                 ap.getPermission().getPermissionId(),
@@ -94,6 +93,7 @@ public class AdminServiceImpl implements AdminService {
                 admin.getAdminId(),
                 user.getEmail(),
                 admin.getRole(),
+                admin.getCreatedAt(),
                 permissionService.assignPermission(adminRequest.getPermissionIds(), admin)
         );
 
@@ -132,6 +132,7 @@ public class AdminServiceImpl implements AdminService {
                 admin.getAdminId(),
                 admin.getUser().getEmail(),
                 admin.getRole(),
+                admin.getCreatedAt(),
                 admin.getAdminPermissions().stream()
                         .map(ap -> new PermissionResponse(
                                 ap.getPermission().getPermissionId(),
