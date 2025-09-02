@@ -45,7 +45,7 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             builder.and(adminPermission.permission.permissionId.in(req.getPermissionIds()));
         }
 
-        // --- 카운트 쿼리 (Count Query) ---
+        // --- 카운트 쿼리 ---
         JPAQuery<Long> countQuery = queryFactory
                 .select(admin.countDistinct())
                 .from(admin);
@@ -54,13 +54,14 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             countQuery.innerJoin(admin.adminPermissions, adminPermission)
                     .innerJoin(adminPermission.permission);
         }
+
         Long total = countQuery.where(builder).fetchOne();
 
         if (total == null || total == 0) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
-        // --- 1단계: 대상 ID 목록 조회 (fetchJoin 없이 DB에서 페이징) ---
+        // --- 1단계: 대상 ID 목록 조회 (페이징) ---
         JPAQuery<Long> idsQuery = queryFactory
                 .select(admin.adminId)
                 .from(admin);
@@ -80,22 +81,23 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             return new PageImpl<>(Collections.emptyList(), pageable, total);
         }
 
-        // --- 2단계: 조회된 ID로 실제 콘텐츠 조회 (fetchJoin으로 N+1 문제 해결) ---
+        // --- 2단계: 실제 콘텐츠 조회 (fetchJoin + 권한 조건 다시 적용) ---
         JPAQuery<Admin> contentQuery = queryFactory
                 .selectFrom(admin)
-                .where(admin.adminId.in(ids))
                 .orderBy(getOrderSpecifier(req.getSort()));
 
         if (hasPermissionFilter) {
             contentQuery.innerJoin(admin.adminPermissions, adminPermission).fetchJoin()
-                    .innerJoin(adminPermission.permission).fetchJoin();
+                    .innerJoin(adminPermission.permission).fetchJoin()
+                    .where(admin.adminId.in(ids)
+                            .and(adminPermission.permission.permissionId.in(req.getPermissionIds())));
         } else {
             contentQuery.leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
-                    .leftJoin(adminPermission.permission).fetchJoin();
+                    .leftJoin(adminPermission.permission).fetchJoin()
+                    .where(admin.adminId.in(ids));
         }
 
         List<Admin> admins = contentQuery.fetch();
-
 
         List<AdminResponse> content = admins.stream()
                 .map(ResponseMapper::toAdminResponse)
