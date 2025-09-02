@@ -9,7 +9,6 @@ import com.ballon.domain.admin.repository.AdminRepository;
 import com.ballon.domain.admin.repository.PermissionRepository;
 import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
-import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.entity.User;
@@ -68,22 +67,9 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(readOnly = true)
     @Override
     public Page<AdminResponse> searchAdmins(AdminSearchRequest req, Pageable pageable) {
-        log.info("searchAdmins 호출 - 조건: {}, 페이지: {}", req, pageable);
+        log.info("searchAdmins 호출 - 검색 조건: {}, 페이지: {}", req, pageable);
 
-        Sort sort = "oldest".equals(req.getSort())
-                ? Sort.by("createdAt").ascending()
-                : Sort.by("createdAt").descending();
-
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                sort
-        );
-
-        Page<AdminResponse> result = adminRepository.search(req, sortedPageable);
-
-        log.info("관리자 검색 완료 - 총 {}건", result.getTotalElements());
-        return result;
+        return adminRepository.search(req, pageable);
     }
 
     @Override

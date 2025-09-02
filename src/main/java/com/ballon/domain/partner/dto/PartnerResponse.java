@@ -4,6 +4,7 @@ import com.ballon.domain.category.dto.CategoryResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -15,5 +16,6 @@ public class PartnerResponse {
     private String name;
     private String overview;
     private String partnerName;
+    private LocalDateTime createdAt;
     private List<CategoryResponse> categories;
 }

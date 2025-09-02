@@ -9,7 +9,12 @@ import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.service.CategoryService;
 import com.ballon.domain.partner.dto.PartnerResponse;
 import com.ballon.domain.partner.dto.PartnerSearchRequest;
+import com.ballon.domain.partner.dto.PartnerSearchResponse;
 import com.ballon.domain.partner.service.PartnerService;
+import com.ballon.domain.user.dto.UserResponse;
+import com.ballon.domain.user.dto.UserSearchRequest;
+import com.ballon.domain.user.dto.UserSearchResponse;
+import com.ballon.domain.user.service.UserService;
 import com.ballon.global.UserUtil;
 import com.ballon.global.cache.CategoryCacheStore;
 import com.ballon.global.common.aop.CheckPermission;
@@ -25,6 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -41,6 +47,7 @@ public class AdminController {
     private final PermissionService permissionService;
     private final PartnerService partnerService;
     private final CategoryService categoryService;
+    private final UserService userService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -147,15 +154,34 @@ public class AdminController {
             description = "이름, 이메일, 활성여부, 카테고리 조건으로 입점업체를 검색합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "검색 성공"),
+            @ApiResponse(responseCode = "200", description = "검색 성공",
+                    content = @Content(schema = @Schema(implementation = PartnerSearchResponse.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping("/partner/search")
-    public Page<PartnerResponse> searchPartners(
+    public Page<PartnerSearchResponse> searchPartners(
             @Parameter(description = "검색 조건") PartnerSearchRequest condition,
             Pageable pageable
     ) {
         return partnerService.searchPartners(condition, pageable);
+    }
+
+    @Operation(
+            summary = "입점업체 조회",
+            description = "기존 입점업체를 수정합니다. 입점업체 관리 권한을 가진 관리자가 입점업체 수정할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "입점업체 조회 성공",
+                    content = @Content(schema = @Schema(implementation = PartnerResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckSuperAdmin
+    @CheckPermission(PermissionType.MANAGE_PARTNER)
+    @PutMapping("/partner/{partner-id}")
+    public ResponseEntity<PartnerResponse> getPartnerByPartnerId(
+            @PathVariable("partner-id") Long partnerId
+    ) {
+        return ResponseEntity.ok(partnerService.getPartnerByPartnerId(partnerId));
     }
 
     @Operation(
@@ -179,7 +205,8 @@ public class AdminController {
             description = "카테고리를 생성합니다. 카테고리 관리 권한을 가진 관리자가 카테고리를 생성 할 때 사용합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "카테고리 생성 성공"),
+            @ApiResponse(responseCode = "201", description = "카테고리 생성 성공",
+                    content = @Content(schema = @Schema(implementation = CategoryCacheStore.Node.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @CheckPermission(PermissionType.MANAGE_CATEGORY)
@@ -202,5 +229,39 @@ public class AdminController {
          categoryService.deleteCategory(categoryId);
 
          return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "사용자 검색",
+            description = "이메일, 이름, 나이, 성별, 권한 조건으로 사용자를 검색합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "검색 성공",
+                    content = @Content(schema = @Schema(implementation = UserSearchResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_USER)
+    @GetMapping("/users/search")
+    public Page<UserSearchResponse> searchUsers(
+            @Parameter(name = "검색조건") UserSearchRequest req,
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
+    ) {
+        return userService.search(req, pageable);
+    }
+
+
+    @Operation(
+            summary = "사용자 조회",
+            description = "기존 사용자를 검색합니다. 사용자 관리 권한을 가진 관리자가 사용자를 조회 할 때 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "카테고리 생성 성공",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_USER)
+    @GetMapping("/users/{user-id}")
+    public UserResponse getUserByUserId(@PathVariable("user-id") Long userId) {
+        return userService.getUserByUserId(userId);
     }
 }

@@ -1,17 +1,17 @@
 package com.ballon.domain.partner.repository.impl;
 
-import com.ballon.domain.category.dto.CategoryResponse;
-import com.ballon.domain.partner.dto.PartnerResponse;
 import com.ballon.domain.partner.dto.PartnerSearchRequest;
-import com.ballon.domain.partner.entity.Partner;
+import com.ballon.domain.partner.dto.PartnerSearchResponse;
 import com.ballon.domain.partner.entity.QPartner;
 import com.ballon.domain.partner.entity.QPartnerCategory;
 import com.ballon.domain.partner.repository.CustomPartnerRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -21,12 +21,13 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<PartnerResponse> search(PartnerSearchRequest req, Pageable pageable) {
+    public Page<PartnerSearchResponse> search(PartnerSearchRequest req, Pageable pageable) {
         QPartner partner = QPartner.partner;
         QPartnerCategory partnerCategory = QPartnerCategory.partnerCategory;
 
@@ -43,33 +44,28 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
         }
 
         boolean hasCategoryFilter = req.getCategoryIds() != null && !req.getCategoryIds().isEmpty();
-        if (hasCategoryFilter) {
-            builder.and(partnerCategory.category.categoryId.in(req.getCategoryIds()));
-        }
 
-        JPAQuery<Partner> contentQuery = queryFactory
-                .selectFrom(partner)
-                .distinct();
-
+        // --- Count Query ---
         JPAQuery<Long> countQuery = queryFactory
                 .select(partner.partnerId.countDistinct())
                 .from(partner);
 
         if (hasCategoryFilter) {
-            contentQuery
-                    .innerJoin(partner.partnerCategory, partnerCategory).fetchJoin()
-                    .innerJoin(partnerCategory.category).fetchJoin();
-
-            countQuery
-                    .innerJoin(partner.partnerCategory, partnerCategory)
-                    .innerJoin(partnerCategory.category);
-        } else {
-            contentQuery
-                    .leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
-                    .leftJoin(partnerCategory.category).fetchJoin();
+            countQuery.innerJoin(partner.partnerCategory, partnerCategory)
+                    .where(partnerCategory.category.categoryId.in(req.getCategoryIds()));
         }
 
-        List<Partner> partners = contentQuery
+        // --- Content Query ---
+        List<PartnerSearchResponse> content = queryFactory
+                .select(Projections.constructor(
+                        PartnerSearchResponse.class,
+                        partner.partnerId,
+                        partner.partnerName,
+                        partner.active,
+                        partner.createdAt
+                ))
+                .from(partner)
+                .distinct()
                 .where(builder)
                 .orderBy(getOrderSpecifier(req.getSort(), partner))
                 .offset(pageable.getOffset())
@@ -78,36 +74,19 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
 
         Long total = countQuery.where(builder).fetchOne();
 
-        List<PartnerResponse> content = partners.stream()
-                .map(p -> new PartnerResponse(
-                        p.getUser().getUserId(),
-                        p.getPartnerId(),
-                        p.getPartnerEmail(),
-                        p.getUser().getName(),
-                        p.getOverview(),
-                        p.getPartnerName(),
-                        p.getPartnerCategory().stream()
-                                .map(pc -> new CategoryResponse(
-                                        pc.getCategory().getCategoryId(),
-                                        pc.getCategory().getName()
-                                ))
-                                .toList()
-                ))
-                .toList();
-
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
     private OrderSpecifier<?> getOrderSpecifier(String sort, QPartner partner) {
         if (sort == null) {
-            return partner.partnerId.desc();
+            return partner.createdAt.desc(); // 기본값 최신순
         }
 
         return switch (sort.toLowerCase()) {
-            case "oldest" -> partner.partnerId.asc();
+            case "oldest" -> partner.createdAt.asc();  // 오래된 순
             case "name" -> partner.partnerName.asc();
             case "email" -> partner.partnerEmail.asc();
-            default -> partner.partnerId.desc();
+            default -> partner.createdAt.desc();
         };
     }
 }

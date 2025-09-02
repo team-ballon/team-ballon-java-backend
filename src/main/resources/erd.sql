@@ -62,6 +62,7 @@ CREATE TABLE "partner" (
                            "active" BOOLEAN NOT NULL,
                            "overview" TEXT,
                            "partner_email" VARCHAR(30) NOT NULL,
+                           "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -237,3 +238,15 @@ CREATE INDEX idx_partner_partner_name_trgm ON partner USING GIN (partner_name gi
 
 -- 이유: 이메일 포함 검색(LIKE '%%') 성능 개선 (강력 추천)
 CREATE INDEX idx_partner_partner_email_trgm ON partner USING GIN (partner_email gin_trgm_ops);
+
+-- ==== User 검색 최적화 ====
+
+-- role 검색 (예: 관리자 목록, 파트너 목록 조회)
+CREATE INDEX idx_user_role ON "user"(role);
+
+-- created_at 정렬/범위 조회 (최신 가입자, 오래된 사용자 등)
+CREATE INDEX idx_user_created_at ON "user"(created_at DESC);
+
+-- 복합 인덱스 (조건에 따라)
+-- (role, created_at): "관리자 중 최근 가입자" 같은 쿼리에 유용
+CREATE INDEX idx_user_role_created_at ON "user"(role, created_at DESC);

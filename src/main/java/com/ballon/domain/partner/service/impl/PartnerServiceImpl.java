@@ -4,10 +4,7 @@ import com.ballon.domain.category.dto.CategoryResponse;
 import com.ballon.domain.category.entity.Category;
 import com.ballon.domain.category.repository.CategoryRepository;
 import com.ballon.domain.category.service.CategoryService;
-import com.ballon.domain.partner.dto.PartnerRegisterRequest;
-import com.ballon.domain.partner.dto.PartnerResponse;
-import com.ballon.domain.partner.dto.PartnerSearchRequest;
-import com.ballon.domain.partner.dto.UpdatePartnerRequest;
+import com.ballon.domain.partner.dto.*;
 import com.ballon.domain.partner.entity.Partner;
 import com.ballon.domain.partner.entity.PartnerCategory;
 import com.ballon.domain.partner.repository.PartnerRepository;
@@ -38,8 +35,33 @@ public class PartnerServiceImpl implements PartnerService {
     private final CategoryRepository categoryRepository;
 
 
+    @Transactional(readOnly = true)
     @Override
-    public Page<PartnerResponse> searchPartners(PartnerSearchRequest partnerSearchRequest, Pageable pageable) {
+    public PartnerResponse getPartnerByPartnerId(Long partnerId) {
+        Partner partner = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
+
+        return new PartnerResponse(
+                partner.getUser().getUserId(),
+                partner.getPartnerId(),
+                partner.getPartnerEmail(),
+                partner.getUser().getName(),
+                partner.getPartnerName(),
+                partner.getOverview(),
+                partner.getCreatedAt(),
+                partner.getPartnerCategory().stream()
+                        .map(pc -> new CategoryResponse(
+                                pc.getCategory().getCategoryId(),
+                                pc.getCategory().getName()
+                        ))
+                        .toList()
+        );
+    }
+
+    @Override
+    public Page<PartnerSearchResponse> searchPartners(PartnerSearchRequest partnerSearchRequest, Pageable pageable) {
+        log.info("입점업체 조회 시도 - 검색 조건: {}, 페이지: {}", partnerSearchRequest, pageable);
+
         return partnerRepository.search(partnerSearchRequest, pageable);
     }
 
@@ -74,6 +96,7 @@ public class PartnerServiceImpl implements PartnerService {
                 userResponse.getName(),
                 partner.getOverview(),
                 partner.getPartnerName(),
+                partner.getCreatedAt(),
                 categoryService.assignPartnerCategory(partnerRegisterRequest.getCategoryIds(), partner)
         );
         log.info("파트너 등록 처리 완료: {}", response);
@@ -113,6 +136,7 @@ public class PartnerServiceImpl implements PartnerService {
                 partner.getUser().getName(),
                 partner.getPartnerName(),
                 partner.getOverview(),
+                partner.getCreatedAt(),
                 categories.stream()
                         .map(c -> new CategoryResponse(
                         c.getCategoryId(),

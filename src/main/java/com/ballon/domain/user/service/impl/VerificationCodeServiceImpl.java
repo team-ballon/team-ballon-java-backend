@@ -17,13 +17,16 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationCodeServiceImpl {
+    private static final int RANDOM_CODE_LENGTH = 6;
     private static final long EXPIRATION_MILLIS = 600000;
     private final EmailService emailService;
     private final VerificationCodeRepository repository;
 
     // 이메일로 인증 코드를 발급 및 전송
     public void sendCodeToEmail(String email) {
-        String code = generateRandomCode(6);
+        log.info("인증 코드 발송 시도 - 이메일: {}", email);
+
+        String code = generateRandomCode();
         VerificationCode vc = VerificationCode.of(email, code, LocalDateTime.now().plusNanos(EXPIRATION_MILLIS * 1_000_000));
         repository.save(vc);
 
@@ -48,34 +51,50 @@ public class VerificationCodeServiceImpl {
   """.formatted(code);
         try {
             emailService.sendEmail(email, title, content);
+            log.info("인증 코드 이메일 발송 성공 - 이메일: {}", email);
         } catch (Exception e) {
-            log.error("이메일 전송 실패: {}", e.getMessage(), e);
             throw new BadRequestException("이메일 전송 실패");
         }
     }
 
     // 이메일 + 코드 검증 (만료/사용 여부 확인 후 성공 시 used=true로 업데이트)
     public boolean verifyCode(String email, String code) {
-        return repository.findByEmailAndCodeAndUsedFalseAndExpiresAtAfter(email, code, LocalDateTime.now())
+        log.info("인증 코드 검증 시도 - 이메일: {}", email);
+
+        boolean result = repository.findByEmailAndCodeAndUsedFalseAndExpiresAtAfter(email, code, LocalDateTime.now())
                 .map(vc -> {
                     vc.setUsed(true);
                     repository.save(vc);
                     return true;
                 })
                 .orElse(false);
+
+        if (result) {
+            log.info("인증 코드 검증 성공 - 이메일: {}", email);
+        } else {
+            log.info("인증 코드 검증 실패 - 이메일: {}", email);
+        }
+
+        return result;
     }
 
     // 매일 정오에 만료된 인증 코드 삭제
     @Scheduled(cron = "0 0 12 * * ?")
     @Transactional
     public void deleteExpired() {
+        log.info("만료된 인증 코드 삭제 시작");
+        int beforeCount = repository.findAll().size();
+
         repository.deleteByExpiresAtBefore(LocalDateTime.now());
+
+        int afterCount = repository.findAll().size();
+        log.info("만료된 인증 코드 삭제 완료 - 삭제된 개수: {}", (beforeCount - afterCount));
     }
 
-    private String generateRandomCode(int length) {
+    private String generateRandomCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         return ThreadLocalRandom.current()
-                .ints(length, 0, chars.length())
+                .ints(RANDOM_CODE_LENGTH, 0, chars.length())
                 .mapToObj(chars::charAt)
                 .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
                 .toString();

@@ -5,6 +5,7 @@ import com.ballon.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +41,9 @@ public class Partner {
     @Column(nullable = false, length = 30)
     private String partnerEmail;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
     @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PartnerCategory> partnerCategory = new HashSet<>();
 
@@ -65,5 +69,6 @@ public class Partner {
     @PrePersist
     public void prePersist() {
         this.active = false;
+        this.createdAt = LocalDateTime.now();
     }
 }
