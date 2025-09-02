@@ -12,6 +12,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class CustomAdminRepositoryImpl implements CustomAdminRepository {
 
     private final JPAQueryFactory queryFactory;
@@ -54,6 +56,7 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             countQuery.innerJoin(admin.adminPermissions, adminPermission)
                     .innerJoin(adminPermission.permission);
         }
+        log.info("countQuery: {}", countQuery.where(builder).toString());
 
         Long total = countQuery.where(builder).fetchOne();
 
@@ -70,6 +73,7 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             idsQuery.innerJoin(admin.adminPermissions, adminPermission)
                     .innerJoin(adminPermission.permission);
         }
+        log.info("idsQuery: {}", idsQuery.where(builder).toString());
 
         List<Long> ids = idsQuery.where(builder)
                 .orderBy(getOrderSpecifier(req.getSort()))
@@ -96,6 +100,7 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
                     .leftJoin(adminPermission.permission).fetchJoin()
                     .where(admin.adminId.in(ids));
         }
+        log.info("contentQuery: {}", contentQuery.toString());
 
         List<Admin> admins = contentQuery.fetch();
 
