@@ -1,6 +1,7 @@
 package com.ballon.domain.category.controller;
 
 import com.ballon.domain.category.dto.CategoryRequest;
+import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.service.CategoryService;
 import com.ballon.global.cache.CategoryCacheStore;
 import com.ballon.global.cache.service.CategoryReadService;
@@ -68,17 +69,6 @@ public class CategoryController {
     @GetMapping("/tree")
     public List<CategoryCacheStore.CategoryTree> tree() {
         return categoryReadService.getCategoryTree();
-    }
-
-    @Operation(summary = "카테고리 생성", description = "parentId와 categoryName을 사용하여서 카테고리 생성을 할 수 있습니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "생성 성공",
-                    content = @Content(schema = @Schema(implementation = CategoryCacheStore.Node.class))),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 카테고리")
-    })
-    @PostMapping
-    public ResponseEntity<CategoryCacheStore.Node> createCategory(CategoryRequest categoryRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(categoryRequest));
     }
 
     @Operation(summary = "카테고리 삭제", description = "categoryId를 사용하여서 카테고리 삭제를 할 수 있습니다.")
