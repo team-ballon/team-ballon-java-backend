@@ -9,8 +9,8 @@ import com.ballon.domain.admin.repository.CustomAdminRepository;
 import com.ballon.global.common.response.ResponseMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAQuery; // JPAQuery 임포트
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -35,40 +35,50 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
             builder.and(admin.user.email.containsIgnoreCase(req.getEmail()));
         }
-
         if (req.getRole() != null && !req.getRole().isBlank()) {
             builder.and(admin.role.eq(req.getRole()));
         }
 
-        if (req.getPermissionIds() != null && !req.getPermissionIds().isEmpty()) {
+        boolean hasPermissionFilter = req.getPermissionIds() != null && !req.getPermissionIds().isEmpty();
+        if (hasPermissionFilter) {
             builder.and(adminPermission.permission.permissionId.in(req.getPermissionIds()));
         }
 
-        // 1. Content 조회 (올바른 조인 사용)
-        List<Admin> admins = queryFactory
+        JPAQuery<Admin> contentQuery = queryFactory
                 .selectFrom(admin)
-                .leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
-                .leftJoin(adminPermission.permission).fetchJoin() // <--- 이 조인이 반드시 필요합니다.
+                .distinct();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(admin.countDistinct())
+                .from(admin);
+
+        if (hasPermissionFilter) {
+            contentQuery
+                    .innerJoin(admin.adminPermissions, adminPermission).fetchJoin()
+                    .innerJoin(adminPermission.permission).fetchJoin();
+
+            countQuery
+                    .innerJoin(admin.adminPermissions, adminPermission)
+                    .innerJoin(adminPermission.permission);
+        } else {
+            contentQuery
+                    .leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
+                    .leftJoin(adminPermission.permission).fetchJoin();
+        }
+
+        // 4. 쿼리 실행
+        List<Admin> admins = contentQuery
                 .where(builder)
-                .distinct()
                 .orderBy(getOrderSpecifier(req.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        Long total = countQuery.where(builder).fetchOne();
+
         List<AdminResponse> content = admins.stream()
                 .map(ResponseMapper::toAdminResponse)
                 .toList();
-
-
-        // 2. Count 조회 (올바른 조인과 countDistinct 사용)
-        Long total = queryFactory
-                .select(admin.countDistinct()) // <--- countDistinct()로 변경
-                .from(admin)
-                .leftJoin(admin.adminPermissions, adminPermission)
-                .leftJoin(adminPermission.permission) // <--- Content 쿼리와 동일한 조인 추가
-                .where(builder)
-                .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }

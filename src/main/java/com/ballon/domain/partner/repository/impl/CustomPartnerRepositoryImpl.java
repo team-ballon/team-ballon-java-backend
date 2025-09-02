@@ -9,6 +9,7 @@ import com.ballon.domain.partner.entity.QPartnerCategory;
 import com.ballon.domain.partner.repository.CustomPartnerRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,11 +35,9 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
         if (req.getName() != null && !req.getName().isBlank()) {
             builder.and(partner.partnerName.containsIgnoreCase(req.getName()));
         }
-
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
             builder.and(partner.partnerEmail.containsIgnoreCase(req.getEmail()));
         }
-
         if (req.getActive() != null) {
             builder.and(partner.active.eq(req.getActive()));
         }
@@ -48,22 +47,36 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
             builder.and(partnerCategory.category.categoryId.in(req.getCategoryIds()));
         }
 
-        var query = queryFactory
+        JPAQuery<Partner> contentQuery = queryFactory
                 .selectFrom(partner)
-                .distinct()
-                .orderBy(getOrderSpecifier(req.getSort(), partner))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize());
+                .distinct();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(partner.partnerId.countDistinct())
+                .from(partner);
 
         if (hasCategoryFilter) {
-            query.innerJoin(partner.partnerCategory, partnerCategory).fetchJoin()
+            contentQuery
+                    .innerJoin(partner.partnerCategory, partnerCategory).fetchJoin()
                     .innerJoin(partnerCategory.category).fetchJoin();
+
+            countQuery
+                    .innerJoin(partner.partnerCategory, partnerCategory)
+                    .innerJoin(partnerCategory.category);
         } else {
-            query.leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
+            contentQuery
+                    .leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
                     .leftJoin(partnerCategory.category).fetchJoin();
         }
 
-        List<Partner> partners = query.where(builder).fetch();
+        List<Partner> partners = contentQuery
+                .where(builder)
+                .orderBy(getOrderSpecifier(req.getSort(), partner))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = countQuery.where(builder).fetchOne();
 
         List<PartnerResponse> content = partners.stream()
                 .map(p -> new PartnerResponse(
@@ -81,18 +94,6 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
                                 .toList()
                 ))
                 .toList();
-
-        Long total;
-        var countQuery = queryFactory
-                .select(partner.partnerId.countDistinct())
-                .from(partner);
-
-        if (hasCategoryFilter) {
-            countQuery.innerJoin(partner.partnerCategory, partnerCategory)
-                    .innerJoin(partnerCategory.category);
-        }
-
-        total = countQuery.where(builder).fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
