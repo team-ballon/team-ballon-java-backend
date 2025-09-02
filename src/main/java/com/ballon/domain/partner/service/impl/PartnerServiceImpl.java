@@ -38,6 +38,8 @@ public class PartnerServiceImpl implements PartnerService {
     @Transactional(readOnly = true)
     @Override
     public PartnerResponse getPartnerByPartnerId(Long partnerId) {
+        log.info("파트너 조회 요청 partnerId: {}", partnerId);
+
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
 
@@ -106,6 +108,8 @@ public class PartnerServiceImpl implements PartnerService {
 
     @Override
     public PartnerResponse updatePartner(Long partnerId, UpdatePartnerRequest updatePartnerRequest) {
+        log.info("파트너 수정 요청 partnerId: {}", partnerId);
+
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
 
