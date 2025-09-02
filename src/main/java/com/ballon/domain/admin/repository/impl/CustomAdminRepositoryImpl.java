@@ -33,19 +33,16 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
         QAdmin admin = QAdmin.admin;
         QAdminPermission adminPermission = QAdminPermission.adminPermission;
 
-        // --- WHERE 조건 생성 ---
-        BooleanBuilder builder = new BooleanBuilder();
+        // --- 기본 WHERE 조건 ---
+        BooleanBuilder baseFilter = new BooleanBuilder();
         if (req.getEmail() != null && !req.getEmail().isBlank()) {
-            builder.and(admin.user.email.containsIgnoreCase(req.getEmail()));
+            baseFilter.and(admin.user.email.containsIgnoreCase(req.getEmail()));
         }
         if (req.getRole() != null && !req.getRole().isBlank()) {
-            builder.and(admin.role.eq(req.getRole()));
+            baseFilter.and(admin.role.eq(req.getRole()));
         }
 
         boolean hasPermissionFilter = req.getPermissionIds() != null && !req.getPermissionIds().isEmpty();
-        if (hasPermissionFilter) {
-            builder.and(adminPermission.permission.permissionId.in(req.getPermissionIds()));
-        }
 
         // --- 카운트 쿼리 ---
         JPAQuery<Long> countQuery = queryFactory
@@ -54,13 +51,17 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
 
         if (hasPermissionFilter) {
             countQuery.innerJoin(admin.adminPermissions, adminPermission)
-                    .innerJoin(adminPermission.permission);
+                    .innerJoin(adminPermission.permission)
+                    .where(baseFilter.and(
+                            adminPermission.permission.permissionId.in(req.getPermissionIds())
+                    ));
+        } else {
+            countQuery.where(baseFilter);
         }
-        countQuery.where(builder);
+
         log.info("countQuery: {}", countQuery);
 
         Long total = countQuery.fetchOne();
-
         if (total == null || total == 0) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
@@ -72,22 +73,26 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
 
         if (hasPermissionFilter) {
             idsQuery.innerJoin(admin.adminPermissions, adminPermission)
-                    .innerJoin(adminPermission.permission);
+                    .innerJoin(adminPermission.permission)
+                    .where(baseFilter.and(
+                            adminPermission.permission.permissionId.in(req.getPermissionIds())
+                    ));
+        } else {
+            idsQuery.where(baseFilter);
         }
-        idsQuery.where(builder)
-                .orderBy(getOrderSpecifier(req.getSort()))
+
+        idsQuery.orderBy(getOrderSpecifier(req.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize());
 
         log.info("idsQuery: {}", idsQuery);
 
         List<Long> ids = idsQuery.fetch();
-
         if (ids.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, total);
         }
 
-        // --- 2단계: 실제 콘텐츠 조회 (fetchJoin + 권한 조건 다시 적용) ---
+        // --- 2단계: 실제 콘텐츠 조회 (fetch join + 권한 조건 다시 적용) ---
         JPAQuery<Admin> contentQuery = queryFactory
                 .selectFrom(admin)
                 .orderBy(getOrderSpecifier(req.getSort()));
@@ -116,16 +121,15 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
 
     private OrderSpecifier<?> getOrderSpecifier(String sort) {
         QAdmin admin = QAdmin.admin;
-
         if (sort == null) {
             return admin.createdAt.desc();
         }
 
         return switch (sort.toLowerCase()) {
             case "oldest" -> admin.createdAt.asc();
-            case "role" -> admin.role.asc();
-            case "email" -> admin.user.email.asc();
-            default -> admin.createdAt.desc();
+            case "role"   -> admin.role.asc();
+            case "email"  -> admin.user.email.asc();
+            default       -> admin.createdAt.desc();
         };
     }
 }
