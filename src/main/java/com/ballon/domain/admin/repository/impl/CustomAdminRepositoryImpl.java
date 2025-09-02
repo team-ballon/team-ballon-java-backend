@@ -81,13 +81,21 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
         }
 
         // --- 2단계: 조회된 ID로 실제 콘텐츠 조회 (fetchJoin으로 N+1 문제 해결) ---
-        List<Admin> admins = queryFactory
+        JPAQuery<Admin> contentQuery = queryFactory
                 .selectFrom(admin)
-                .leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
-                .leftJoin(adminPermission.permission).fetchJoin()
                 .where(admin.adminId.in(ids))
-                .orderBy(getOrderSpecifier(req.getSort()))
-                .fetch();
+                .orderBy(getOrderSpecifier(req.getSort()));
+
+        if (hasPermissionFilter) {
+            contentQuery.innerJoin(admin.adminPermissions, adminPermission).fetchJoin()
+                    .innerJoin(adminPermission.permission).fetchJoin();
+        } else {
+            contentQuery.leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
+                    .leftJoin(adminPermission.permission).fetchJoin();
+        }
+
+        List<Admin> admins = contentQuery.fetch();
+
 
         List<AdminResponse> content = admins.stream()
                 .map(ResponseMapper::toAdminResponse)
