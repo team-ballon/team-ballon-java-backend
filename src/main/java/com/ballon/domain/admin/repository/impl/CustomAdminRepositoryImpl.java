@@ -44,11 +44,11 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             builder.and(adminPermission.permission.permissionId.in(req.getPermissionIds()));
         }
 
-        // Content
+        // 1. Content 조회 (올바른 조인 사용)
         List<Admin> admins = queryFactory
                 .selectFrom(admin)
                 .leftJoin(admin.adminPermissions, adminPermission).fetchJoin()
-                .leftJoin(adminPermission.permission).fetchJoin() // Permission까지 조인
+                .leftJoin(adminPermission.permission).fetchJoin() // <--- 이 조인이 반드시 필요합니다.
                 .where(builder)
                 .distinct()
                 .orderBy(getOrderSpecifier(req.getSort()))
@@ -61,13 +61,13 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
                 .toList();
 
 
-        // Count
+        // 2. Count 조회 (올바른 조인과 countDistinct 사용)
         Long total = queryFactory
-                .select(Wildcard.count)
+                .select(admin.countDistinct()) // <--- countDistinct()로 변경
                 .from(admin)
                 .leftJoin(admin.adminPermissions, adminPermission)
+                .leftJoin(adminPermission.permission) // <--- Content 쿼리와 동일한 조인 추가
                 .where(builder)
-                .distinct()
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);

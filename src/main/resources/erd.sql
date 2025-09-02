@@ -196,3 +196,44 @@ CREATE TABLE "admin_permission" (
                                     "permission_id" INTEGER NOT NULL REFERENCES "permission" ("permission_id"),
                                     PRIMARY KEY ("admin_id", "permission_id")
 );
+
+-- ==== Admin 검색 최적화 ====
+
+-- 이유: user 테이블과 JOIN 시 사용
+CREATE INDEX idx_admin_user_id ON "admin" (user_id);
+
+-- 이유: role 컬럼 필터링 및 정렬용
+CREATE INDEX idx_admin_role ON "admin" (role);
+
+-- 이유: 최신순/오래된순 정렬용
+CREATE INDEX idx_admin_created_at ON "admin" (created_at DESC);
+
+-- 이유: permission_id로 관리자를 찾기 위함
+CREATE INDEX idx_admin_permission_permission_id ON admin_permission (permission_id);
+
+
+-- ==== Partner 검색 최적화 ====
+
+-- Trigram 확장을 먼저 활성화합니다. (DB 당 최초 1회)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- 이유: category 테이블과 JOIN 시 사용 (partner_id 기준)
+CREATE INDEX idx_partner_category_partner_id ON partner_category (partner_id);
+
+-- 이유: category 테이블과 JOIN 시 사용 (category_id 기준)
+CREATE INDEX idx_partner_category_category_id2 ON partner_category (category_id2);
+
+-- 이유: active 여부 필터링용
+CREATE INDEX idx_partner_active ON partner (active);
+
+-- 이유: 이름 기준 정렬(ORDER BY)용
+CREATE INDEX idx_partner_partner_name ON partner (partner_name);
+
+-- 이유: 이메일 기준 정렬(ORDER BY)용
+CREATE INDEX idx_partner_partner_email ON partner (partner_email);
+
+-- 이유: 이름 포함 검색(LIKE '%%') 성능 개선 (강력 추천)
+CREATE INDEX idx_partner_partner_name_trgm ON partner USING GIN (partner_name gin_trgm_ops);
+
+-- 이유: 이메일 포함 검색(LIKE '%%') 성능 개선 (강력 추천)
+CREATE INDEX idx_partner_partner_email_trgm ON partner USING GIN (partner_email gin_trgm_ops);

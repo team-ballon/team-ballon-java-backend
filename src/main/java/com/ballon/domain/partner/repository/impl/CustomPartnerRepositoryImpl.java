@@ -48,7 +48,6 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
             builder.and(partnerCategory.category.categoryId.in(req.getCategoryIds()));
         }
 
-        // Content
         var query = queryFactory
                 .selectFrom(partner)
                 .distinct()
@@ -58,15 +57,13 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
 
         if (hasCategoryFilter) {
             query.innerJoin(partner.partnerCategory, partnerCategory).fetchJoin()
-                    .innerJoin(partnerCategory.category).fetchJoin()
-                    .where(builder);
+                    .innerJoin(partnerCategory.category).fetchJoin();
         } else {
             query.leftJoin(partner.partnerCategory, partnerCategory).fetchJoin()
-                    .leftJoin(partnerCategory.category).fetchJoin()
-                    .where(builder);
+                    .leftJoin(partnerCategory.category).fetchJoin();
         }
 
-        List<Partner> partners = query.fetch();
+        List<Partner> partners = query.where(builder).fetch();
 
         List<PartnerResponse> content = partners.stream()
                 .map(p -> new PartnerResponse(
@@ -85,13 +82,17 @@ public class CustomPartnerRepositoryImpl implements CustomPartnerRepository {
                 ))
                 .toList();
 
-        // Count (fetchJoin 제거 + countDistinct)
-        Long total = queryFactory
+        Long total;
+        var countQuery = queryFactory
                 .select(partner.partnerId.countDistinct())
-                .from(partner)
-                .leftJoin(partner.partnerCategory, partnerCategory) // 여기선 leftJoin만
-                .where(builder)
-                .fetchOne();
+                .from(partner);
+
+        if (hasCategoryFilter) {
+            countQuery.innerJoin(partner.partnerCategory, partnerCategory)
+                    .innerJoin(partnerCategory.category);
+        }
+
+        total = countQuery.where(builder).fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
