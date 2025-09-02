@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api/auth/**",
-                                "/api/users/register"
+                                "/api/users/register",
+                                "/api/partner/register"
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
 
