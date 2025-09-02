@@ -62,6 +62,7 @@ CREATE TABLE "partner" (
                            "active" BOOLEAN NOT NULL,
                            "overview" TEXT,
                            "partner_email" VARCHAR(30) NOT NULL,
+                           "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -86,7 +87,7 @@ CREATE TABLE "product" (
                            "name" VARCHAR(50) NOT NULL,
                            "price" INTEGER NOT NULL,
                            "quantity" INTEGER NOT NULL,
-                           "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id"),
+                           "category_id" INTEGER REFERENCES "category" ("category_id") ON DELETE SET NULL,
                            "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
 
@@ -195,3 +196,56 @@ CREATE TABLE "admin_permission" (
                                     "permission_id" INTEGER NOT NULL REFERENCES "permission" ("permission_id"),
                                     PRIMARY KEY ("admin_id", "permission_id")
 );
+
+-- ==== Admin 검색 최적화 ====
+
+-- 이유: user 테이블과 JOIN 시 사용
+CREATE INDEX idx_admin_user_id ON "admin" (user_id);
+
+-- 이유: role 컬럼 필터링 및 정렬용
+CREATE INDEX idx_admin_role ON "admin" (role);
+
+-- 이유: 최신순/오래된순 정렬용
+CREATE INDEX idx_admin_created_at ON "admin" (created_at DESC);
+
+-- 이유: permission_id로 관리자를 찾기 위함
+CREATE INDEX idx_admin_permission_permission_id ON admin_permission (permission_id);
+
+
+-- ==== Partner 검색 최적화 ====
+
+-- Trigram 확장을 먼저 활성화합니다. (DB 당 최초 1회)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- 이유: category 테이블과 JOIN 시 사용 (partner_id 기준)
+CREATE INDEX idx_partner_category_partner_id ON partner_category (partner_id);
+
+-- 이유: category 테이블과 JOIN 시 사용 (category_id 기준)
+CREATE INDEX idx_partner_category_category_id2 ON partner_category (category_id2);
+
+-- 이유: active 여부 필터링용
+CREATE INDEX idx_partner_active ON partner (active);
+
+-- 이유: 이름 기준 정렬(ORDER BY)용
+CREATE INDEX idx_partner_partner_name ON partner (partner_name);
+
+-- 이유: 이메일 기준 정렬(ORDER BY)용
+CREATE INDEX idx_partner_partner_email ON partner (partner_email);
+
+-- 이유: 이름 포함 검색(LIKE '%%') 성능 개선 (강력 추천)
+CREATE INDEX idx_partner_partner_name_trgm ON partner USING GIN (partner_name gin_trgm_ops);
+
+-- 이유: 이메일 포함 검색(LIKE '%%') 성능 개선 (강력 추천)
+CREATE INDEX idx_partner_partner_email_trgm ON partner USING GIN (partner_email gin_trgm_ops);
+
+-- ==== User 검색 최적화 ====
+
+-- role 검색 (예: 관리자 목록, 파트너 목록 조회)
+CREATE INDEX idx_user_role ON "user"(role);
+
+-- created_at 정렬/범위 조회 (최신 가입자, 오래된 사용자 등)
+CREATE INDEX idx_user_created_at ON "user"(created_at DESC);
+
+-- 복합 인덱스 (조건에 따라)
+-- (role, created_at): "관리자 중 최근 가입자" 같은 쿼리에 유용
+CREATE INDEX idx_user_role_created_at ON "user"(role, created_at DESC);

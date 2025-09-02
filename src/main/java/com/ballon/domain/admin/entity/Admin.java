@@ -4,7 +4,7 @@ import com.ballon.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +35,7 @@ public class Admin {
     private String role;
 
     @Column(nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AdminPermission> adminPermissions = new HashSet<>();
@@ -54,6 +54,6 @@ public class Admin {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
     }
 }

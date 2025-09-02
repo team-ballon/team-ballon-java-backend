@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 public class PartnerRegisterRequest {
@@ -41,5 +43,5 @@ public class PartnerRegisterRequest {
     private String partnerEmail;
 
     @NotEmpty(message = "최소 한 개 이상의 카테고리를 선택해야 합니다.")
-    private java.util.List<Long> categoryIds;
+    private List<Long> categoryIds;
 }

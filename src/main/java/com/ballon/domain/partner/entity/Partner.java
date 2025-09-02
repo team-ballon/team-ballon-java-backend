@@ -1,8 +1,13 @@
 package com.ballon.domain.partner.entity;
 
+import com.ballon.domain.admin.entity.AdminPermission;
 import com.ballon.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "partner")
@@ -27,7 +32,7 @@ public class Partner {
     @Column(length = 50, nullable = false)
     private String partnerName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private Boolean active;
 
     @Column(columnDefinition = "TEXT")
@@ -36,24 +41,34 @@ public class Partner {
     @Column(nullable = false, length = 30)
     private String partnerEmail;
 
-    public static Partner createPartner(String name, String overview, String email, User user) {
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PartnerCategory> partnerCategory = new HashSet<>();
+
+    public static Partner createPartner(String partnerName, String overview, String email) {
         return Partner.builder()
-                .partnerName(name)
+                .partnerName(partnerName)
                 .overview(overview)
                 .partnerEmail(email)
-                .user(user)
                 .build();
     }
 
     // 입점업체 정보 업데이트
-    public void updatePartner(String name, String overview, String email) {
-        this.partnerName = name;
+    public void updatePartner(String partnerName, String overview, String partnerEmail) {
+        this.partnerName = partnerName;
         this.overview = overview;
-        this.partnerEmail = email;
+        this.partnerEmail = partnerEmail;
+    }
+
+    public void updateActive(Boolean active) {
+        this.active = active;
     }
 
     @PrePersist
     public void prePersist() {
         this.active = false;
+        this.createdAt = LocalDateTime.now();
     }
 }

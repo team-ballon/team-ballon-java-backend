@@ -41,7 +41,9 @@ public class CategoryCacheStore {
     public void loadAll(List<Category> all) {
         lock.writeLock().lock();
         try {
-            byId.clear(); childrenIndex.clear(); rootIds.clear();
+            byId.clear();
+            childrenIndex.clear();
+            rootIds.clear();
 
             // 1) 노드 생성
             for (Category c : all) {
@@ -57,6 +59,10 @@ public class CategoryCacheStore {
                     rootIds.add(n.id);
                 } else {
                     childrenIndex.computeIfAbsent(n.parentId, k -> new ArrayList<>()).add(n.id);
+                    Node parent = byId.get(n.parentId);
+                    if (parent != null) {
+                        parent.children.add(n.id);
+                    }
                 }
             }
 
@@ -64,6 +70,7 @@ public class CategoryCacheStore {
             Comparator<Long> byNameCmp = Comparator.comparing(id -> byId.get(id).name, String.CASE_INSENSITIVE_ORDER);
             rootIds.sort(byNameCmp);
             for (List<Long> list : childrenIndex.values()) list.sort(byNameCmp);
+            for (Node node : byId.values()) node.children.sort(byNameCmp);
         } finally {
             lock.writeLock().unlock();
         }
@@ -93,7 +100,7 @@ public class CategoryCacheStore {
 
     private CategoryTree toTree(Long id) {
         Node n = byId.get(id);
-        List<CategoryTree> children = childrenIndex.getOrDefault(id, List.of()).stream()
+        List<CategoryTree> children = n.children.stream()
                 .map(this::toTree)
                 .toList();
         return new CategoryTree(n.id, n.name, n.depth, children);
@@ -112,8 +119,9 @@ public class CategoryCacheStore {
     public List<Node> getChildrenOf(Long parentId) {
         lock.readLock().lock();
         try {
-            List<Long> ids = childrenIndex.getOrDefault(parentId, List.of());
-            return ids.stream().map(byId::get).toList();
+            Node parent = byId.get(parentId);
+            if (parent == null) return List.of();
+            return parent.children.stream().map(byId::get).toList();
         } finally {
             lock.readLock().unlock();
         }
@@ -155,6 +163,12 @@ public class CategoryCacheStore {
                 childrenIndex.computeIfAbsent(parentId, k -> new ArrayList<>()).add(id);
                 childrenIndex.get(parentId)
                         .sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+
+                Node parent = byId.get(parentId);
+                if (parent != null) {
+                    parent.children.add(id);
+                    parent.children.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                }
             }
         } finally {
             lock.writeLock().unlock();
@@ -174,6 +188,11 @@ public class CategoryCacheStore {
                 List<Long> siblings = childrenIndex.getOrDefault(n.parentId, List.of());
                 if (!siblings.isEmpty()) {
                     siblings.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                }
+
+                Node parent = byId.get(n.parentId);
+                if (parent != null && !parent.children.isEmpty()) {
+                    parent.children.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
                 }
             }
         } finally {
@@ -196,6 +215,9 @@ public class CategoryCacheStore {
             } else {
                 List<Long> siblings = childrenIndex.get(n.parentId);
                 if (siblings != null) siblings.remove(id);
+
+                Node parent = byId.get(n.parentId);
+                if (parent != null) parent.children.remove(id);
             }
 
             for (Long delId : toDelete) {
