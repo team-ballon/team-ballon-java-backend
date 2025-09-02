@@ -56,9 +56,10 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             countQuery.innerJoin(admin.adminPermissions, adminPermission)
                     .innerJoin(adminPermission.permission);
         }
-        log.info("countQuery: {}", countQuery.where(builder).toString());
+        countQuery.where(builder);
+        log.info("countQuery: {}", countQuery);
 
-        Long total = countQuery.where(builder).fetchOne();
+        Long total = countQuery.fetchOne();
 
         if (total == null || total == 0) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -73,13 +74,14 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             idsQuery.innerJoin(admin.adminPermissions, adminPermission)
                     .innerJoin(adminPermission.permission);
         }
-        log.info("idsQuery: {}", idsQuery.where(builder).toString());
-
-        List<Long> ids = idsQuery.where(builder)
+        idsQuery.where(builder)
                 .orderBy(getOrderSpecifier(req.getSort()))
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                .limit(pageable.getPageSize());
+
+        log.info("idsQuery: {}", idsQuery);
+
+        List<Long> ids = idsQuery.fetch();
 
         if (ids.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, total);
@@ -100,7 +102,8 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
                     .leftJoin(adminPermission.permission).fetchJoin()
                     .where(admin.adminId.in(ids));
         }
-        log.info("contentQuery: {}", contentQuery.toString());
+
+        log.info("contentQuery: {}", contentQuery);
 
         List<Admin> admins = contentQuery.fetch();
 

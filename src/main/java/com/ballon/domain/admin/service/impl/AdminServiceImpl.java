@@ -17,10 +17,9 @@ import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
 import com.ballon.domain.user.repository.UserRepository;
 import com.ballon.domain.user.service.UserService;
-import com.ballon.global.UserUtil;
-import com.ballon.global.common.exception.ForbiddenException;
 import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,20 +33,22 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class AdminServiceImpl implements AdminService {
     private final AdminRepository adminRepository;
     private final UserService userService;
     private final UserRepository userRepository;
     private final PermissionService permissionService;
     private final PermissionRepository permissionRepository;
-    private final PartnerService partnerService;
 
     @Transactional(readOnly = true)
     public AdminResponse getAdminByAdminId(Long adminId) {
+        log.info("getAdminByAdminId 호출 - adminId: {}", adminId);
+
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
 
-        return new AdminResponse(
+        AdminResponse response = new AdminResponse(
                 admin.getAdminId(),
                 admin.getUser().getEmail(),
                 admin.getRole(),
@@ -59,11 +60,16 @@ public class AdminServiceImpl implements AdminService {
                         ))
                         .toList()
         );
+
+        log.info("관리자 조회 성공 - adminId: {}, email: {}", adminId, admin.getUser().getEmail());
+        return response;
     }
 
     @Transactional(readOnly = true)
     @Override
     public Page<AdminResponse> searchAdmins(AdminSearchRequest req, Pageable pageable) {
+        log.info("searchAdmins 호출 - 조건: {}, 페이지: {}", req, pageable);
+
         Sort sort = "oldest".equals(req.getSort())
                 ? Sort.by("createdAt").ascending()
                 : Sort.by("createdAt").descending();
@@ -74,13 +80,16 @@ public class AdminServiceImpl implements AdminService {
                 sort
         );
 
-        return adminRepository.search(req, sortedPageable);
-    }
+        Page<AdminResponse> result = adminRepository.search(req, sortedPageable);
 
+        log.info("관리자 검색 완료 - 총 {}건", result.getTotalElements());
+        return result;
+    }
 
     @Override
     public AdminResponse createAdmin(AdminRequest adminRequest) {
-        // 유저 생성
+        log.info("createAdmin 호출 - email: {}", adminRequest.getEmail());
+
         UserRegisterRequest userRegisterRequest = new UserRegisterRequest(
                 adminRequest.getEmail(),
                 adminRequest.getPassword(),
@@ -93,31 +102,34 @@ public class AdminServiceImpl implements AdminService {
         User user = userRepository.getReferenceById(userResponse.getUserId());
 
         Admin admin = Admin.of(user, adminRequest.getRoleName());
-
         adminRepository.save(admin);
 
-        return new AdminResponse(
+        AdminResponse response = new AdminResponse(
                 admin.getAdminId(),
                 user.getEmail(),
                 admin.getRole(),
                 permissionService.assignPermission(adminRequest.getPermissionIds(), admin)
         );
+
+        log.info("관리자 생성 완료 - adminId: {}, email: {}", admin.getAdminId(), user.getEmail());
+        return response;
     }
 
     @Override
     @Transactional
     public AdminResponse updateAdmin(Long adminId, AdminUpdateRequest adminUpdateRequest) {
+        log.info("updateAdmin 호출 - adminId: {}, 요청: {}", adminId, adminUpdateRequest);
+
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
 
-        // 역할 수정
         admin.updateRole(adminUpdateRequest.getRoleName());
+        log.debug("관리자 역할 업데이트 완료 - adminId: {}, role: {}", adminId, adminUpdateRequest.getRoleName());
 
-        // 기존 권한 제거 (orphanRemoval 덕분에 DB에서도 삭제됨)
         admin.getAdminPermissions().removeIf(ap -> true);
         adminRepository.flush();
+        log.debug("기존 권한 제거 완료 - adminId: {}", adminId);
 
-        // 새 권한 추가
         List<Permission> permissions = permissionRepository.findAllById(adminUpdateRequest.getPermissionIds());
         for (Permission permission : permissions) {
             admin.getAdminPermissions().add(
@@ -128,8 +140,9 @@ public class AdminServiceImpl implements AdminService {
                     )
             );
         }
+        log.debug("새로운 권한 추가 완료 - adminId: {}, permissions: {}", adminId, permissions.size());
 
-        return new AdminResponse(
+        AdminResponse response = new AdminResponse(
                 admin.getAdminId(),
                 admin.getUser().getEmail(),
                 admin.getRole(),
@@ -141,15 +154,21 @@ public class AdminServiceImpl implements AdminService {
                         ))
                         .toList()
         );
-    }
 
+        log.info("관리자 업데이트 완료 - adminId: {}", adminId);
+        return response;
+    }
 
     @Override
     public void removeAdminByAdminId(Long adminId) {
+        log.info("removeAdminByAdminId 호출 - adminId: {}", adminId);
+
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
 
         adminRepository.delete(admin);
         userRepository.deleteById(admin.getUser().getUserId());
+
+        log.info("관리자 및 유저 삭제 완료 - adminId: {}, userId: {}", adminId, admin.getUser().getUserId());
     }
 }
