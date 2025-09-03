@@ -1,7 +1,7 @@
 name: deploy-ballon-java-maven
 on:
   push:
-    branches: ["feature/#4/product"]
+    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
