@@ -62,6 +62,7 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                 .select(Projections.constructor(
                         ProductSearchResponse.class,
                         product.id,
+                        product.productUrl,
                         product.name,
                         product.price,
                         product.partner.partnerId,
