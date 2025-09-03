@@ -1,0 +1,10 @@
+package com.ballon.domain.product.repository;
+
+import com.ballon.domain.product.dto.ProductSearchRequest;
+import com.ballon.domain.product.dto.ProductSearchResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface CustomProductRepository {
+    Page<ProductSearchResponse> search(ProductSearchRequest req, Pageable pageable);
+}
