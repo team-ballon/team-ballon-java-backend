@@ -62,7 +62,7 @@ CREATE TABLE "partner" (
                            "active" BOOLEAN NOT NULL,
                            "overview" TEXT,
                            "partner_email" VARCHAR(30) NOT NULL,
-                           "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -73,7 +73,7 @@ CREATE TABLE "address" (
                            "contact_number" VARCHAR(20) NOT NULL, -- 연락처
                            "base_address" VARCHAR(255) NOT NULL,     -- 주소
                            "detail_address" VARCHAR(255),       -- 상세주소 (필수 아닐 수 있음)
-                           "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 생성일시
+                           "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 생성일시
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -84,9 +84,11 @@ CREATE TABLE "cart" (
 
 CREATE TABLE "product" (
                            "product_id" SERIAL PRIMARY KEY,
+                           "product_url" VARCHAR(1000),
                            "name" VARCHAR(50) NOT NULL,
                            "price" INTEGER NOT NULL,
                            "quantity" INTEGER NOT NULL,
+                           "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            "category_id" INTEGER REFERENCES "category" ("category_id") ON DELETE SET NULL,
                            "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
@@ -221,7 +223,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE INDEX idx_partner_category_partner_id ON partner_category (partner_id);
 
 -- 이유: category 테이블과 JOIN 시 사용 (category_id 기준)
-CREATE INDEX idx_partner_category_category_id2 ON partner_category (category_id2);
+CREATE INDEX idx_partner_category_category_id2 ON partner_category (category_id);
 
 -- 이유: active 여부 필터링용
 CREATE INDEX idx_partner_active ON partner (active);
@@ -249,3 +251,26 @@ CREATE INDEX idx_user_created_at ON "user"(created_at DESC);
 -- 복합 인덱스 (조건에 따라)
 -- (role, created_at): "관리자 중 최근 가입자" 같은 쿼리에 유용
 CREATE INDEX idx_user_role_created_at ON "user"(role, created_at DESC);
+
+-- ==== Product 검색 최적화 ====
+
+-- 최신 상품 조회
+CREATE INDEX IF NOT EXISTS idx_product_created_at
+    ON product (created_at DESC);
+
+-- 카테고리별 최신 상품 조회
+CREATE INDEX IF NOT EXISTS idx_product_category_created_at
+    ON product (category_id, created_at DESC);
+
+-- 파트너별 최신 상품 조회
+CREATE INDEX IF NOT EXISTS idx_product_partner_created_at
+    ON product (partner_id, created_at DESC);
+
+-- 가격 필터링
+CREATE INDEX IF NOT EXISTS idx_product_price
+    ON product (price);
+
+-- 상품명 LIKE 검색 최적화 (pg_trgm 확장 필요)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS idx_product_name_trgm
+    ON product USING gin (name gin_trgm_ops);

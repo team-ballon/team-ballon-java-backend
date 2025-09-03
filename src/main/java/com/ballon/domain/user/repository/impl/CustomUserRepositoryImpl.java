@@ -1,6 +1,5 @@
 package com.ballon.domain.user.repository.impl;
 
-import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.dto.UserSearchRequest;
 import com.ballon.domain.user.dto.UserSearchResponse;
 import com.ballon.domain.user.entity.QUser;
