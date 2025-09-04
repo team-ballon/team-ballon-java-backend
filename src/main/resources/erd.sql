@@ -105,7 +105,7 @@ CREATE TABLE "orders" (
                           "toss_order_id" VARCHAR(100) NOT NULL,
                           "amount" INTEGER NOT NULL,
                           "status" VARCHAR(20) NOT NULL,
-                          "payment_key" VARCHAR(200),
+                          "payment_key" VARCHAR(200) NULL -- 실제 운영시에만 사용 가능,
                           "paid_at" TIMESTAMP,
                           "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
