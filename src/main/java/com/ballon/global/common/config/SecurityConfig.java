@@ -48,11 +48,11 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/api/auth/**",
                                 "/api/users/register",
-                                "/api/partner/register"
+                                "/api/partner/register",
+                                "/api/products/"
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
 
-                        .requestMatchers(HttpMethod.GET, "/api/products/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/tree").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/roots").permitAll()
