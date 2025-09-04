@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/users/register",
                                 "/api/partner/register",
-                                "/api/products/"
+                                "/api/products/**"
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
 
