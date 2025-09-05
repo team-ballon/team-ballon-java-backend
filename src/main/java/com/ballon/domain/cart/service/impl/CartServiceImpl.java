@@ -1,20 +1,20 @@
 package com.ballon.domain.cart.service.impl;
 
-import com.ballon.domain.cart.dto.CartItemRequest;
+import com.ballon.domain.cart.dto.CartProductRequest;
 import com.ballon.domain.cart.dto.CartResponse;
 import com.ballon.domain.cart.entity.Cart;
-import com.ballon.domain.cart.entity.CartItem;
-import com.ballon.domain.cart.repository.CartItemRepository;
+import com.ballon.domain.cart.entity.CartProduct;
+import com.ballon.domain.cart.repository.CartProductRepository;
 import com.ballon.domain.cart.repository.CartRepository;
 import com.ballon.domain.cart.service.CartService;
 import com.ballon.domain.product.entity.Product;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.user.entity.User;
-import jakarta.persistence.EntityNotFoundException;
+import com.ballon.global.common.exception.NotFoundException;
+import com.ballon.global.common.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.stream.Collectors;
 
@@ -24,95 +24,98 @@ import java.util.stream.Collectors;
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
+    private final CartProductRepository cartProductRepository;
     private final ProductRepository productRepository;
 
-    // securtiy 에서 userID 뽑지 않고 파라미터로 받는 방식 security 에서 뽑는거면 수정해야함.
+
 
     @Override
     @Transactional(readOnly = true)
     public CartResponse getMyCart(Long userId) {
         Cart cart = cartRepository.findByUserUserId(userId)
-                .orElseGet(() -> cartRepository.save(Cart.builder()
-                                .user(User.builder().userId(userId).build())
-                        .build()));
+                .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
+
         return toDto(cart);
     }
 
     @Override
-    public CartResponse addItem(Long userId, CartItemRequest req) {
+    public CartResponse addProduct(Long userId, CartProductRequest req) {
+        // 1) 장바구니 확보(없으면 생성)
         Cart cart = cartRepository.findByUserUserId(userId)
-                .orElseGet(() -> cartRepository.save(Cart.builder()
-                    .user(User.builder().userId(userId).build())
-                .build()));
+                .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
 
         Product product = productRepository.findById(req.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("상품이 존재하지 않습니다."));
 
-        CartItem item = cartItemRepository.findByCartIdAndCartUserUserId(cart.getId(), product.getId())
+        // 디버그 로그
+        System.out.printf("[ADD] cartId=%d, productId=%d, qty=%d%n",
+                cart.getId(), product.getId(), req.getQuantity());
+
+        CartProduct line = cartProductRepository.findByCartIdAndProductId(cart.getId(), product.getId())
                 .orElseGet(() -> {
-                    CartItem created = CartItem.builder()
-                            .product(product)
-                            .quantity(0)
-                            .build();
-                    cart.addItem(created);
+                    CartProduct created = CartProduct.create(product, 0);
+                    cart.addProduct(created);
                     return created;
                 });
-        item.increase(req.getQuantity());
-        cartItemRepository.save(item);
+
+        if (req.getQuantity() == null || req.getQuantity() <= 0) {
+            throw new ValidationException("수량은 1 이상이어야 합니다.");
+        }
+
+        line.increase(req.getQuantity());
+        cartProductRepository.save(line);
         return toDto(cart);
     }
 
     @Override
-    public CartResponse changeQuantity(Long userId, Long cartItemId, Integer quantity) {
-        if (quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("수량은 0 이상이어야 합니다.)");
+    public CartResponse changeQuantity(Long userId, Long cartProductId, Integer quantity) {
+        if (quantity == null || quantity < 0) {
+            throw new ValidationException("수량은 1 이상이어야 합니다.");
         }
-        Cart cart =cartRepository.findByUserUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("장바구니가 없습니다."));
+        var cart =cartRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new NotFoundException("장바구니가 없습니다."));
 
-        CartItem item = cart.getItems().stream()
-                .filter(ci -> ci.getId().equals(cartItemId))
+        var line = cart.getProducts().stream()
+                .filter(cp -> cp.getId().equals(cartProductId))
                 .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("장바구니 항목이 없습니다."));
-        if (quantity == 0) {
-            cart.removeItem(item);
-        } else {
-            item.changeQuantity(quantity);
-        }
-        item.changeQuantity(quantity);
+                .orElseThrow(() -> new NotFoundException("장바구니 상품이 없습니다."));
+
+        line.changeQuantity(quantity);
+
         return toDto(cart);
     }
 
     @Override
-    public CartResponse removeItem(Long userId, Long cartItemId) {
+    public CartResponse removeProduct(Long userId, Long cartProductId) {
         Cart cart = cartRepository.findByUserUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("장바구니가 없습니다."));
-        CartItem item = cart.getItems().stream()
-                .filter(ci -> ci.getId().equals(cartItemId))
+                .orElseThrow(() -> new NotFoundException("장바구니가 없습니다."));
+        CartProduct line = cart.getProducts().stream()
+                .filter(cp -> cp.getId().equals(cartProductId))
                 .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("장바구니 항목이 없습니다."));
-        cart.removeItem(item);
+                .orElseThrow(() -> new NotFoundException("장바구니 상품이 없습니다."));
+        cart.removeProduct(line);
         return toDto(cart);
     }
 
     private CartResponse toDto(Cart cart) {
-        var items = cart.getItems().stream().map(ci -> CartResponse.Item.builder()
-                .cartItemId(ci.getId())
-                .productId(ci.getProduct().getId())
-                .name(ci.getProduct().getName())
-                .price(ci.getProduct().getPrice())
-                .quantity(ci.getQuantity())
-                .lineAmount(ci.getProduct().getPrice() * ci.getQuantity())
-                .build()).collect(Collectors.toList());
+        var products = cart.getProducts().stream()
+                .map(cp -> CartResponse.Product.builder()
+                        .cartProductId(cp.getId())
+                        .productId(cp.getProduct().getId())
+                        .name(cp.getProduct().getName())
+                        .price(cp.getProduct().getPrice())
+                        .quantity(cp.getQuantity())
+                        .lineAmount(cp.getProduct().getPrice() * cp.getQuantity())
+                        .build())
+                .collect(Collectors.toList());
 
-        int totalQty = items.stream().mapToInt(CartResponse.Item::getQuantity).sum();
-        int totalAmt = items.stream().mapToInt(CartResponse.Item::getLineAmount).sum();
+        int totalQty = products.stream().mapToInt(CartResponse.Product::getQuantity).sum();
+        int totalAmt = products.stream().mapToInt(CartResponse.Product::getLineAmount).sum();
 
         return CartResponse.builder()
                 .cartId(cart.getId())
                 .userId(cart.getUser().getUserId())
-                .items(items)
+                .products(products)
                 .totalQuantity(totalQty)
                 .totalPrice(totalAmt)
                 .build();

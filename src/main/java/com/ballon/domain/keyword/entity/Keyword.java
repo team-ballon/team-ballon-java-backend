@@ -1,4 +1,4 @@
-package com.ballon.domain.search.entity;
+package com.ballon.domain.keyword.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,17 +6,17 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "search_keyword",
-       uniqueConstraints = @UniqueConstraint(name = "uk_search_keyword_normalized", columnNames = "normalized"),
+@Table(name = "keyword",
+       uniqueConstraints = @UniqueConstraint(name = "uk_keyword_normalized", columnNames = "normalized"),
        indexes = {
-            @Index(name = "idx_search_keyword_count", columnList = "count"),
-            @Index(name = "idx_search_keyword_last", columnList = "last_searched_at")
+            @Index(name = "idx_keyword_count", columnList = "count"),
+            @Index(name = "idx_keyword_last", columnList = "last_keyword_at")
        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class SearchKeyword {
+public class Keyword {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,7 +33,7 @@ public class SearchKeyword {
     @Column(nullable = false)
     private Long count;
 
-    @Column(name = "last_searched_at", nullable = false)
+    @Column(name = "last_keyword_at", nullable = false)
     private LocalDateTime lastSearchedAt;
 
     // 검색 기록 반영
@@ -44,8 +44,8 @@ public class SearchKeyword {
     }
 
     // 최초 생성 팩토리
-    public static SearchKeyword create(String display, String normalized) {
-        return SearchKeyword.builder()
+    public static Keyword create(String display, String normalized) {
+        return Keyword.builder()
                 .keyword(display)
                 .normalized(normalized)
                 .count(1L)

@@ -4,14 +4,13 @@ import com.ballon.domain.product.dto.ProductSearchCond;
 import com.ballon.domain.product.dto.ProductSummaryDto;
 import com.ballon.domain.product.entity.Product;
 import com.ballon.domain.product.service.ProductService;
-import com.ballon.domain.search.service.SearchKeywordService;
+import com.ballon.domain.keyword.service.KeywordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
-    private final SearchKeywordService searchKeywordService;
+    private final KeywordService keywordService;
 
     // 예시 /api/products?keyword=선크림&categoryId=3&minPrice=10000&maxPrice=30000&status=ACTIVE&inStockOnly=true&sort=price,asc&page=0&size=20
     @Operation(summary = "상품 검색/필터",
@@ -57,7 +56,7 @@ public class ProductController {
 
         // 인기 검색어 기록 (keyword 있으면)
         if (keyword != null && !keyword.isBlank()) {
-            searchKeywordService.record(keyword);
+            keywordService.record(keyword);
         }
 
         return productService.search(cond, pageable);

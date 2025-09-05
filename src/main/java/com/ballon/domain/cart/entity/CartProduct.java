@@ -2,17 +2,18 @@ package com.ballon.domain.cart.entity;
 
 
 import com.ballon.domain.product.entity.Product;
+import com.ballon.global.common.exception.ValidationException;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "cart_item",
-       uniqueConstraints = @UniqueConstraint(name = "uk_cart_item", columnNames = {"cart_id", "product_id"}))
+@Table(name = "cart_product",
+       uniqueConstraints = @UniqueConstraint(name = "uk_cart_product", columnNames = {"cart_id", "product_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
-public class CartItem {
+@Builder(access = AccessLevel.PRIVATE)
+public class CartProduct {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,20 +21,29 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY) // 다대1 (여러 항목이 한 장바구니에)
     @JoinColumn(name = "cart_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cartitem_cart"))
+            foreignKey = @ForeignKey(name = "fk_cartproduct_cart"))
     private Cart cart;
 
     @ManyToOne(fetch =FetchType.LAZY)
     @JoinColumn(name = "product_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cartitem_product"))
+            foreignKey = @ForeignKey(name = "fk_cartproduct_product"))
     private Product product;
 
     private int quantity;
 
-    // 연관관계 세터 (양방향 관리 목적)
-    public void setCart(Cart cart) {
-        this.cart=cart;
+    public static CartProduct create(Product product, int quantity) {
+        if(product == null) throw new ValidationException("상품은 필수입니다.");
+        if (quantity <0) throw new ValidationException("수량은 0 보다 커야 합니다.");
+        return CartProduct.builder()
+                .product(product)
+                .quantity(quantity)
+                .build(); // cart는 cart.addItem()에서 연결
+    }
+
+    // cart에서만 연관 세팅 가능하도록 패키지-프라이빗
+    void setCart(Cart cart) {
+        this.cart = cart;
     }
 
     public void changeQuantity(int quantity) {
@@ -47,5 +57,4 @@ public class CartItem {
         this.quantity = next;
     }
 
-    // 여기서는 상품 재고 차감 하지 않음 (결제직전/ 주문확정 시점이 안전하기 때문) 장바구니는 담아두기 용도
 }

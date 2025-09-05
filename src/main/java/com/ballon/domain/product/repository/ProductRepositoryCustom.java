@@ -1,4 +1,4 @@
-package com.ballon.domain.product.repository.ProductRepositoryCustom;
+package com.ballon.domain.product.repository;
 
 import com.ballon.domain.product.dto.ProductSearchCond;
 import com.ballon.domain.product.dto.ProductSummaryDto;

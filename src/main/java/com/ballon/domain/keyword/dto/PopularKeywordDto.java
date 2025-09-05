@@ -1,4 +1,4 @@
-package com.ballon.domain.search.dto;
+package com.ballon.domain.keyword.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
