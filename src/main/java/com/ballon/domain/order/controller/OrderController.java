@@ -29,7 +29,8 @@ public class OrderController {
                     description = "주문 생성 성공",
                     content = @Content(schema = @Schema(implementation = OrderResponse.class))
             ),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 상품 또는 주소")
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 상품 또는 주소"),
+            @ApiResponse(responseCode = "409", description = "만료된 쿠폰 또는 사용된 쿠폰")
     })
     @PostMapping
     public OrderResponse createOrder(@RequestBody OrderRequest orderRequest) {
