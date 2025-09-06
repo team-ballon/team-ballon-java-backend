@@ -1,5 +1,6 @@
 package com.ballon.domain.product.controller;
 
+import com.ballon.domain.keyword.service.KeywordService;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "상품 관리 API", description = "상품과 관련된 기능")
 public class ProductController {
     private final ProductService productService;
+    private final KeywordService keywordService;
 
     @Operation(
             summary = "상품 검색",
@@ -38,6 +40,11 @@ public class ProductController {
             @Parameter(description = "검색 조건") ProductSearchRequest productSearchRequest,
             Pageable pageable
     ) {
+        String keyword = productSearchRequest.getName();
+        if (keyword != null && !keyword.isBlank()) {
+            keywordService.saveKeyword(keyword);
+        }
+
         return productService.searchProduct(productSearchRequest, pageable);
     }
 

@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "product",
@@ -50,6 +52,9 @@ public class Product {
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_product_partner"))
     private Partner partner;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CouponProduct> adminPermissions = new HashSet<>();
 
     public static Product createProduct(String productUrl, String name, Integer price, Integer quantity) {
         return Product.builder()

@@ -95,21 +95,40 @@ CREATE TABLE "product" (
 
 CREATE TABLE "coupon" (
                           "coupon_id" SERIAL PRIMARY KEY,
+                          "coupon_name" VARCHAR(255) NOT NULL,
                           "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('PERCENT', 'FIXED')),
                           "event_id" INTEGER NOT NULL REFERENCES "event" ("event_id"),
                           "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
 
-CREATE TABLE "orders" (
+CREATE TABLE "user_coupon" (
+                               "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
+                               "coupon_id" INTEGER NOT NULL REFERENCES "coupon" ("coupon_id"),
+                               "is_used" BOOLEAN NOT NULL,
+                               PRIMARY KEY ("user_id", "coupon_id")
+);
+
+CREATE UNIQUE INDEX uniq_user_coupon ON user_coupon(user_id, coupon_id);
+
+CREATE TABLE "settlement" (
+                              "settlement_id" SERIAL PRIMARY KEY,
+                              "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
+                              "period_start" DATE NOT NULL,          -- 정산 시작일
+                              "period_end" DATE NOT NULL,            -- 정산 종료일
+                              "total_amount" INTEGER NOT NULL,       -- 해당 기간 합계 금액
+                              "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('PENDING', 'PAID')),
+                              "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "order" (
                           "order_id" SERIAL PRIMARY KEY,
-                          "toss_order_id" VARCHAR(100) NOT NULL,
                           "amount" INTEGER NOT NULL,
-                          "status" VARCHAR(20) NOT NULL,
-                          "payment_key" VARCHAR(200) NULL -- 실제 운영시에만 사용 가능,
+                          "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('READY', 'IN_PROGRESS', 'WAITING_FOR_DEPOSIT', 'DONE', 'CANCELED', 'PARTIAL_CANCELED', 'ABORTED', 'EXPIRED')),
                           "paid_at" TIMESTAMP,
                           "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
-                          "address_id" INTEGER NOT NULL REFERENCES "address" ("address_id")
+                          "address_id" INTEGER NOT NULL REFERENCES "address" ("address_id"),
+                          "settlement_id" INTEGER NULL REFERENCES "settlement" ("settlement_id")
 );
 
 CREATE TABLE "partner_category" (
@@ -122,7 +141,7 @@ CREATE TABLE "cart_product" (
                                 "cart_product_id" SERIAL PRIMARY KEY,
                                 "quantity" SMALLINT NOT NULL,
                                 "cart_id" INTEGER NOT NULL REFERENCES "cart" ("cart_id"),
-                                "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
+                                "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
 );
 
 CREATE TABLE "image_link" (
@@ -130,12 +149,6 @@ CREATE TABLE "image_link" (
                               "link" VARCHAR(300) NOT NULL,
                               "order" INTEGER NOT NULL,
                               "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
-);
-
-CREATE TABLE "wishlist" (
-                            "wishlist_id" SERIAL PRIMARY KEY,
-                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
-                            "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
 CREATE TABLE "review" (
@@ -156,7 +169,10 @@ CREATE TABLE "event_application" (
 
 CREATE TABLE "keyword" (
                            "keyword_id" SERIAL PRIMARY KEY,
-                           "keyword" VARCHAR(100) NOT NULL,
+                           "keyword" VARCHAR(200) NOT NULL,
+                           "normalized" VARCHAR(200) NOT NULL,
+                           "count" INTEGER NOT NULL,
+                           "last_searched_at" TIMESTAMP NOT NULL,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 
@@ -190,7 +206,13 @@ CREATE TABLE "coupon_product" (
 CREATE TABLE "order_product" (
                                  "order_product_id" SERIAL PRIMARY KEY,
                                  "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
-                                 "order_id" INTEGER NOT NULL REFERENCES "orders" ("order_id")
+                                 "order_id" INTEGER NOT NULL REFERENCES "orders" ("order_id"),
+                                 "coupon_id" INTEGER REFERENCES "coupon"("coupon_id"),
+                                 "quantity" INTEGER NOT NULL,
+                                 "product_amount" INTEGER NOT NULL,
+                                 "discount_amount" INTEGER NOT NULL,
+                                 "paid_amount" INTEGER NOT NULL,
+                                 "created_at" TIMESTAMP NOT NULL,
 );
 
 CREATE TABLE "admin_permission" (
