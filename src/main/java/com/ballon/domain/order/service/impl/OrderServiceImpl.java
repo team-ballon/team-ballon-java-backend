@@ -110,52 +110,6 @@ public class OrderServiceImpl implements OrderService {
         return buildOrderResponse(orderRequest, order, firstProductName);
     }
 
-    // 쿠폰 검증
-    private void validateUserCoupon(UserCoupon userCoupon) {
-        if (userCoupon.getIsUsed()) {
-            throw new ConflictException("이미 사용된 쿠폰입니다.");
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        if (userCoupon.getCoupon().getEvent().getEndDate().isBefore(now)) {
-            throw new ConflictException("만료된 쿠폰입니다.");
-        }
-    }
-
-    // 주문 생성 및 저장
-    private Order createAndSaveOrder(OrderRequest orderRequest, int totalAmount) {
-        Order order = Order.createOrder(
-                totalAmount,
-                OrderStatus.READY,
-                userRepository.getReferenceById(UserUtil.getUserId()),
-                addressRepository.getReferenceById(orderRequest.getAddressId())
-        );
-
-        return orderRepository.save(order);
-    }
-
-    // 주문과 상품 연결
-    private void linkOrderProducts(List<OrderProduct> orderProducts, Order order) {
-        for (OrderProduct orderProduct : orderProducts) {
-            orderProduct.setOrder(order);
-        }
-        orderProductRepository.saveAll(orderProducts);
-    }
-
-    // 응답 DTO 생성
-    private OrderResponse buildOrderResponse(OrderRequest orderRequest, Order order, String firstProductName) {
-        String orderTitle = (orderRequest.getProducts().size() > 1)
-                ? firstProductName + " 외 " + (orderRequest.getProducts().size() - 1) + "건"
-                : firstProductName;
-
-        return new OrderResponse(
-                order.getOrderId(),
-                order.getAmount(),
-                orderTitle,
-                userRepository.getUserNameByUserId(UserUtil.getUserId())
-        );
-    }
-
     @Override
     public OrderResponse completeOrder(PaymentConfirmRequest paymentConfirmRequest) {
         Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
@@ -204,6 +158,56 @@ public class OrderServiceImpl implements OrderService {
                 paymentFailRequest.getOrderId(),
                 paymentFailRequest.getCode(),
                 paymentFailRequest.getMessage());
+    }
+
+    public void getUserOrders(Long userId) {
+
+    }
+
+    // 쿠폰 검증
+    private void validateUserCoupon(UserCoupon userCoupon) {
+        if (userCoupon.getIsUsed()) {
+            throw new ConflictException("이미 사용된 쿠폰입니다.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (userCoupon.getCoupon().getEvent().getEndDate().isBefore(now)) {
+            throw new ConflictException("만료된 쿠폰입니다.");
+        }
+    }
+
+    // 주문 생성 및 저장
+    private Order createAndSaveOrder(OrderRequest orderRequest, int totalAmount) {
+        Order order = Order.createOrder(
+                totalAmount,
+                OrderStatus.READY,
+                userRepository.getReferenceById(UserUtil.getUserId()),
+                addressRepository.getReferenceById(orderRequest.getAddressId())
+        );
+
+        return orderRepository.save(order);
+    }
+
+    // 주문과 상품 연결
+    private void linkOrderProducts(List<OrderProduct> orderProducts, Order order) {
+        for (OrderProduct orderProduct : orderProducts) {
+            orderProduct.setOrder(order);
+        }
+        orderProductRepository.saveAll(orderProducts);
+    }
+
+    // 응답 DTO 생성
+    private OrderResponse buildOrderResponse(OrderRequest orderRequest, Order order, String firstProductName) {
+        String orderTitle = (orderRequest.getProducts().size() > 1)
+                ? firstProductName + " 외 " + (orderRequest.getProducts().size() - 1) + "건"
+                : firstProductName;
+
+        return new OrderResponse(
+                order.getOrderId(),
+                order.getAmount(),
+                orderTitle,
+                userRepository.getUserNameByUserId(UserUtil.getUserId())
+        );
     }
 
 }
