@@ -1,9 +1,13 @@
 package com.ballon.domain.product.service.impl;
 
+import com.ballon.domain.coupon.dto.CouponResponse;
+import com.ballon.domain.coupon.entity.Coupon;
+import com.ballon.domain.coupon.repository.CouponRepository;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.entity.Product;
+import com.ballon.domain.product.repository.CouponProductRepository;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.product.service.ProductService;
 import com.ballon.global.cache.CategoryCacheStore;
@@ -25,6 +29,8 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryCacheStore categoryCacheStore;
+    private final CouponProductRepository couponProductRepository;
+    private final CouponRepository couponRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -48,6 +54,19 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 상품입니다."));
 
+        List<Long> couponIds = couponProductRepository.findCouponIdsByProductId(productId);
+
+        List<CouponResponse> couponResponses = couponIds.isEmpty()
+                ? List.of()
+                : couponRepository.findAllByIdWithEvent(couponIds).stream()
+                .map(coupon -> new CouponResponse(
+                        coupon.getCouponId(),
+                        coupon.getCouponName(),
+                        coupon.getEvent().getStartDate(),
+                        coupon.getEvent().getEndDate()
+                ))
+                .toList();
+
         return new ProductResponse(
                 product.getId(),
                 product.getProductUrl(),
@@ -58,7 +77,8 @@ public class ProductServiceImpl implements ProductService {
                 product.getCategory().getCategoryId(),
                 product.getCategory().getName(),
                 product.getPartner().getPartnerId(),
-                product.getPartner().getPartnerName()
+                product.getPartner().getPartnerName(),
+                couponResponses
         );
     }
 }
