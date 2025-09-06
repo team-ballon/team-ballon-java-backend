@@ -1,5 +1,6 @@
 package com.ballon.domain.product.service;
 
+import com.ballon.domain.product.dto.ProductBestRequest;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
@@ -10,4 +11,6 @@ public interface ProductService {
     Page<ProductSearchResponse> searchProduct(ProductSearchRequest req, Pageable pageable);
 
     ProductResponse getProduct(Long productId);
+
+    Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable);
 }

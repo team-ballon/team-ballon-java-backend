@@ -2,6 +2,7 @@ package com.ballon.domain.product.service.impl;
 
 import com.ballon.domain.coupon.dto.CouponResponse;
 import com.ballon.domain.coupon.repository.CouponRepository;
+import com.ballon.domain.product.dto.ProductBestRequest;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
@@ -89,5 +90,22 @@ public class ProductServiceImpl implements ProductService {
                 couponResponses,
                 imageLinks
         );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable) {
+        CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
+        List<Long> categoryIds = new ArrayList<>();
+
+        if(Objects.nonNull(category)){
+            if (!category.children.isEmpty()) {
+                categoryIds.addAll(category.children);
+            } else {
+                categoryIds.add(req.getCategoryId());
+            }
+        }
+
+        return productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
     }
 }
