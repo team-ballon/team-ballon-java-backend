@@ -37,3 +37,6 @@ src/main/resources/application-dev.properties
 .mvn/wrapper/maven-wrapper.properties
 mvnw
 mvnw.cmd
+
+# Local-only Spring profile
+src/main/resources/application-local.properties
