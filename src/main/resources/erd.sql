@@ -146,7 +146,7 @@ CREATE TABLE "cart_product" (
 
 CREATE TABLE "image_link" (
                               "image_link_id" SERIAL PRIMARY KEY,
-                              "link" VARCHAR(300) NOT NULL,
+                              "link" VARCHAR(1000) NOT NULL,
                               "order" INTEGER NOT NULL,
                               "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
