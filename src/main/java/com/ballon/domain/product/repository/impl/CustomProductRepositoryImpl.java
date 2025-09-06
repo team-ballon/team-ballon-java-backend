@@ -1,5 +1,9 @@
 package com.ballon.domain.product.repository.impl;
 
+import com.ballon.domain.order.entity.QOrder;
+import com.ballon.domain.order.entity.QOrderProduct;
+import com.ballon.domain.order.entity.type.OrderStatus;
+import com.ballon.domain.product.dto.ProductBestRequest;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.entity.QProduct;
@@ -11,10 +15,11 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -75,10 +80,69 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = countQuery.fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0);
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
+
+    @Override
+    public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, List<Long> categoryIds, Pageable pageable) {
+        LocalDateTime from = LocalDateTime.now().minusDays(30);
+
+        QProduct product = QProduct.product;
+        QOrderProduct orderProduct = QOrderProduct.orderProduct;
+        QOrder order = QOrder.order;
+
+        BooleanBuilder builder = new BooleanBuilder()
+                .and(order.status.eq(OrderStatus.DONE))
+                .and(order.createdAt.goe(from));
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            builder.and(product.category.categoryId.in(categoryIds));
+        }
+        if (req.getPartnerId() != null) {
+            builder.and(product.partner.partnerId.eq(req.getPartnerId()));
+        }
+
+        // --- Content Query ---
+        List<ProductSearchResponse> results = queryFactory
+                .select(Projections.constructor(
+                        ProductSearchResponse.class,
+                        product.id,
+                        product.productUrl,
+                        product.name,
+                        product.price,
+                        product.partner.partnerId,
+                        product.partner.partnerName,
+                        orderProduct.quantity.sum(),
+                        orderProduct.quantity.multiply(orderProduct.productAmount).sum()
+                ))
+                .from(orderProduct)
+                .join(order).on(orderProduct.order.orderId.eq(order.orderId))
+                .join(product).on(orderProduct.product.id.eq(product.id))
+                .where(builder)
+                .groupBy(product.id,
+                        product.productUrl,
+                        product.name,
+                        product.price,
+                        product.partner.partnerId,
+                        product.partner.partnerName)
+                .orderBy(orderProduct.quantity.sum().desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // --- Count Query ---
+        Long total = queryFactory
+                .select(product.id.countDistinct())
+                .from(orderProduct)
+                .join(order).on(orderProduct.order.orderId.eq(order.orderId))
+                .join(product).on(orderProduct.product.id.eq(product.id))
+                .where(builder)
+                .fetchOne();
+
+        return PageableExecutionUtils.getPage(results, pageable, () -> total == null ? 0L : total);
+    }
+
+
 
     private OrderSpecifier<?> getOrderSpecifier(String sort, QProduct product) {
         if (sort == null) {

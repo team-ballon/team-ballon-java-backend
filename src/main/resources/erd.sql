@@ -43,8 +43,9 @@ CREATE TABLE "event" (
                          "event_id" SERIAL PRIMARY KEY,
                          "title" VARCHAR(100) NOT NULL,
                          "description" TEXT NOT NULL,
-                         "start_date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                         "end_date" TIMESTAMP NOT NULL
+                         "start_date" TIMESTAMP NOT NULL,
+                         "end_date" TIMESTAMP NOT NULL,
+                         "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. 종속 테이블
@@ -296,3 +297,11 @@ CREATE INDEX IF NOT EXISTS idx_product_price
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE INDEX IF NOT EXISTS idx_product_name_trgm
     ON product USING gin (name gin_trgm_ops);
+
+-- ==== Event 검색 최적화 ====
+
+CREATE INDEX idx_event_title_desc_trgm ON event USING gin ((title || ' ' || description) gin_trgm_ops);
+
+CREATE INDEX idx_event_start_end ON event (start_date, end_date);
+
+CREATE INDEX idx_event_created_at_desc ON event (created_at DESC);

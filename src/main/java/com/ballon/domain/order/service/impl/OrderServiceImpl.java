@@ -1,5 +1,6 @@
 package com.ballon.domain.order.service.impl;
 
+import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.address.repository.AddressRepository;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.entity.type.Type;
@@ -24,6 +25,8 @@ import com.ballon.global.common.exception.ConflictException;
 import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,13 +163,38 @@ public class OrderServiceImpl implements OrderService {
                 paymentFailRequest.getMessage());
     }
 
-    public void getUserOrders(Long userId) {
+    @Override
+    public Page<OrderSummaryResponse> getOrdersByUser(Long userId, Pageable pageable) {
+        return orderProductRepository.findAllByUserId(userId, pageable);
+    }
 
+    @Override
+    public OrderDetailResponse getOrderDetail(Long orderProductId) {
+        OrderProduct op = orderProductRepository.findById(orderProductId)
+                .orElseThrow(() -> new NotFoundException("주문 내역이 없습니다."));
+
+        return OrderDetailResponse.builder()
+                .productName(op.getProduct().getName())
+                .productImageUrl(op.getProduct().getProductUrl())
+                .address(new AddressResponse(
+                        op.getOrder().getAddress().getAddressId(),
+                        op.getOrder().getAddress().getName(),
+                        op.getOrder().getAddress().getRecipient(),
+                        op.getOrder().getAddress().getContactNumber(),
+                        op.getOrder().getAddress().getBaseAddress(),
+                        op.getOrder().getAddress().getDetailAddress()
+                ))
+                .quantity(op.getQuantity())
+                .productAmount(op.getProductAmount())
+                .discountAmount(op.getDiscountAmount())
+                .paidAmount(op.getPaidAmount())
+                .createdAt(op.getCreatedAt())
+                .build();
     }
 
     // 쿠폰 검증
     private void validateUserCoupon(UserCoupon userCoupon) {
-        if (userCoupon.getIsUsed()) {
+        if (Boolean.TRUE.equals(userCoupon.getIsUsed())) {
             throw new ConflictException("이미 사용된 쿠폰입니다.");
         }
 

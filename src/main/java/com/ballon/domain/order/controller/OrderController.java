@@ -1,17 +1,19 @@
 package com.ballon.domain.order.controller;
 
-import com.ballon.domain.order.dto.OrderRequest;
-import com.ballon.domain.order.dto.OrderResponse;
-import com.ballon.domain.order.dto.PaymentConfirmRequest;
-import com.ballon.domain.order.dto.PaymentFailRequest;
+import com.ballon.domain.order.dto.*;
 import com.ballon.domain.order.service.OrderService;
+import com.ballon.domain.product.dto.ProductSearchResponse;
+import com.ballon.global.UserUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,5 +64,33 @@ public class OrderController {
         orderService.failOrder(paymentFailRequest);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "내 주문 내역 조회",
+            description = "로그인한 사용자의 주문 목록을 페이징 형태로 조회합니다. " +
+                    "`page`, `size`, `sort` 파라미터로 페이지네이션과 정렬을 제어할 수 있습니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrderSummaryResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    @GetMapping
+    public ResponseEntity<Page<OrderSummaryResponse>> getMyOrders(Pageable pageable) {
+        return ResponseEntity.ok(orderService.getOrdersByUser(UserUtil.getUserId(), pageable));
+    }
+
+    @Operation(
+            summary = "주문 상세 조회",
+            description = "특정 주문 상품(orderProductId)에 대한 상세 정보를 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "주문 상세 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 주문 상품을 찾을 수 없음")
+    })
+    @GetMapping("/{order-product-id}")
+    public ResponseEntity<OrderDetailResponse> getOrderDetail(@PathVariable("order-product-id") Long orderProductId) {
+        return ResponseEntity.ok(orderService.getOrderDetail(orderProductId));
     }
 }

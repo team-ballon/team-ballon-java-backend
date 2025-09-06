@@ -106,6 +106,7 @@ public class CartServiceImpl implements CartService {
         var products = cart.getProducts().stream()
                 .map(cp -> CartResponse.Product.builder()
                         .cartProductId(cp.getId())
+                        .productImageUrl(cp.getProduct().getProductUrl())
                         .productId(cp.getProduct().getId())
                         .name(cp.getProduct().getName())
                         .price(cp.getProduct().getPrice())
