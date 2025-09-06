@@ -24,7 +24,7 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<ProductSearchResponse> search(ProductSearchRequest req, Pageable pageable) {
+    public Page<ProductSearchResponse> search(ProductSearchRequest req, List<Long> categoryIds, Pageable pageable) {
         QProduct product = QProduct.product;
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -44,8 +44,8 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
         if (req.getEndDate() != null) {
             builder.and(product.createdAt.loe(req.getEndDate()));
         }
-        if (req.getCategoryId() != null) {
-            builder.and(product.category.categoryId.eq(req.getCategoryId()));
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            builder.and(product.category.categoryId.in(categoryIds));
         }
         if (req.getPartnerId() != null) {
             builder.and(product.partner.partnerId.eq(req.getPartnerId()));

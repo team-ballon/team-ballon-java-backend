@@ -6,6 +6,7 @@ import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.entity.Product;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.product.service.ProductService;
+import com.ballon.global.cache.CategoryCacheStore;
 import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,18 +15,32 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
+    private final CategoryCacheStore categoryCacheStore;
 
     @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> searchProduct(ProductSearchRequest req, Pageable pageable) {
-        return productRepository.search(req, pageable);
+        CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
+        List<Long> categoryIds = new ArrayList<>();
+
+        if (!category.children.isEmpty()) {
+            categoryIds.addAll(category.children);
+        } else {
+            categoryIds.add(req.getCategoryId());
+        }
+
+        return productRepository.search(req, categoryIds, pageable);
     }
+
 
     @Transactional(readOnly = true)
     @Override
