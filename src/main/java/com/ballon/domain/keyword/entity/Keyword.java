@@ -49,7 +49,11 @@ public class Keyword {
                 .keyword(display)
                 .normalized(normalized)
                 .count(1L)
-                .lastSearchedAt(LocalDateTime.now())
                 .build();
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.lastSearchedAt = LocalDateTime.now();
     }
 }
