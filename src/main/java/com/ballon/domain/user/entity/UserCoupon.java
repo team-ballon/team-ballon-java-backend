@@ -12,7 +12,7 @@ import lombok.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "coupon")
+@Table(name = "user_coupon")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
