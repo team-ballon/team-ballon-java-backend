@@ -1,9 +1,11 @@
 package com.ballon.domain.product.dto;
 
+import com.ballon.domain.coupon.dto.CouponResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -18,4 +20,5 @@ public class ProductResponse {
     private String categoryName;
     private Long partnerId;
     private String partnerName;
+    private List<CouponResponse> coupons;
 }
