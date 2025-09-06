@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class PaymentFailRequest {
-    private String orderId;
+    private Long orderId;
     private String code;
     private String message;
 }

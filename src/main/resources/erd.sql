@@ -103,7 +103,7 @@ CREATE TABLE "coupon" (
 
 CREATE TABLE "user_coupon" (
                                "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
-                               "coupon_id" INTEGER NOT NULL REFERENCES "permission" ("coupon_id"),
+                               "coupon_id" INTEGER NOT NULL REFERENCES "coupon" ("coupon_id"),
                                "is_used" BOOLEAN NOT NULL,
                                PRIMARY KEY ("user_id", "coupon_id")
 );
@@ -151,12 +151,6 @@ CREATE TABLE "image_link" (
                               "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
-CREATE TABLE "wishlist" (
-                            "wishlist_id" SERIAL PRIMARY KEY,
-                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
-                            "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
-);
-
 CREATE TABLE "review" (
                           "review_id" SERIAL PRIMARY KEY,
                           "detail" TEXT NOT NULL,
@@ -175,7 +169,10 @@ CREATE TABLE "event_application" (
 
 CREATE TABLE "keyword" (
                            "keyword_id" SERIAL PRIMARY KEY,
-                           "keyword" VARCHAR(100) NOT NULL,
+                           "keyword" VARCHAR(200) NOT NULL,
+                           "normalized" VARCHAR(200) NOT NULL,
+                           "count" INTEGER NOT NULL,
+                           "last_searched_at" TIMESTAMP NOT NULL,
                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
 

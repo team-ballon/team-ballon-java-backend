@@ -3,10 +3,7 @@ package com.ballon.domain.order.service.impl;
 import com.ballon.domain.address.repository.AddressRepository;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.entity.type.Type;
-import com.ballon.domain.order.dto.OrderProductRequest;
-import com.ballon.domain.order.dto.OrderRequest;
-import com.ballon.domain.order.dto.OrderResponse;
-import com.ballon.domain.order.dto.PaymentConfirmRequest;
+import com.ballon.domain.order.dto.*;
 import com.ballon.domain.order.entity.Order;
 import com.ballon.domain.order.entity.OrderProduct;
 import com.ballon.domain.order.entity.type.OrderStatus;
@@ -22,6 +19,7 @@ import com.ballon.domain.user.entity.id.UserCouponId;
 import com.ballon.domain.user.repository.UserCouponRepository;
 import com.ballon.domain.user.repository.UserRepository;
 import com.ballon.global.UserUtil;
+import com.ballon.global.common.exception.BadRequestException;
 import com.ballon.global.common.exception.ConflictException;
 import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -158,6 +156,54 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    public void completeOrder(PaymentConfirmRequest paymentConfirmRequest) {
+    @Override
+    public OrderResponse completeOrder(PaymentConfirmRequest paymentConfirmRequest) {
+        Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_OrderId(order.getOrderId());
+        int totalAmount = orderProducts.stream()
+                .mapToInt(OrderProduct::getPaidAmount)
+                .sum();
+
+        if(totalAmount != paymentConfirmRequest.getAmount()) {
+            throw new BadRequestException("결제 금액 불일치.");
+        }
+
+        order.updateOrderStatus(OrderStatus.DONE);
+
+        List<Long> couponIds = orderProductRepository.findCouponIdsByOrderId(order.getOrderId());
+        if (!couponIds.isEmpty()) {
+            int usedCouponQuantity = userCouponRepository.markCouponsAsUsed(UserUtil.getUserId(), couponIds);
+
+            log.info("사용자 {}의 쿠폰 사용 처리 성공 (총 {}건) - 적용 쿠폰 ID: {}",
+                    UserUtil.getUserId(), usedCouponQuantity, couponIds);
+        }
+
+        String firstProductName = orderProducts.getFirst().getProduct().getName();
+        String orderTitle = (orderProducts.size() > 1)
+                ? firstProductName + " 외 " + (orderProducts.size() - 1) + "건"
+                : firstProductName;
+
+        return new OrderResponse(
+                order.getOrderId(),
+                order.getAmount(),
+                orderTitle,
+                userRepository.getUserNameByUserId(UserUtil.getUserId())
+        );
     }
+
+    @Override
+    public void failOrder(PaymentFailRequest paymentFailRequest) {
+        Order order = orderRepository.findById(paymentFailRequest.getOrderId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        order.updateOrderStatus(OrderStatus.CANCELED);
+
+        log.warn("주문 {} 결제 실패 처리 - 코드: {}, 사유: {}",
+                paymentFailRequest.getOrderId(),
+                paymentFailRequest.getCode(),
+                paymentFailRequest.getMessage());
+    }
+
 }

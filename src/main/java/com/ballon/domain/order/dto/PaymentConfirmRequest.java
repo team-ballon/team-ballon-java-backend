@@ -6,6 +6,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class PaymentConfirmRequest {
-    private String orderId;
+    private Long orderId;
     private int amount;
 }
