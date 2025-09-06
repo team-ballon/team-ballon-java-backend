@@ -9,11 +9,13 @@ import com.ballon.domain.user.entity.id.UserCouponId;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
 @Table(name = "user_coupon")
 @Getter
+@Access(AccessType.FIELD)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class UserCoupon {
@@ -30,8 +32,11 @@ public class UserCoupon {
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
 
-    @Column(nullable = false)
+    @Column(name = "is_used", nullable = false)
     private Boolean isUsed;
+
+    @Column(name = "used_at")
+    private LocalDateTime usedAt;
 
     @Override
     public boolean equals(Object o) {

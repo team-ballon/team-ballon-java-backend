@@ -1,5 +1,6 @@
 package com.ballon.domain.coupon.dto;
 
+import com.ballon.domain.coupon.entity.Coupon;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,4 +13,14 @@ public class CouponResponse {
     private String couponName;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+
+    public static CouponResponse from(Coupon c) {
+        return new CouponResponse(
+                c.getCouponId(),
+                c.getCouponName(),
+                c.getEvent().getStartDate(),
+                c.getEvent().getEndDate()
+        );
+    }
 }
+
