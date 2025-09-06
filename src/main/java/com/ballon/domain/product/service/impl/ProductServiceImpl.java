@@ -6,8 +6,10 @@ import com.ballon.domain.coupon.repository.CouponRepository;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
+import com.ballon.domain.product.entity.ImageLink;
 import com.ballon.domain.product.entity.Product;
 import com.ballon.domain.product.repository.CouponProductRepository;
+import com.ballon.domain.product.repository.ImageLinkRepository;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.product.service.ProductService;
 import com.ballon.global.cache.CategoryCacheStore;
@@ -31,6 +33,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryCacheStore categoryCacheStore;
     private final CouponProductRepository couponProductRepository;
     private final CouponRepository couponRepository;
+    private final ImageLinkRepository imageLinkRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -53,6 +56,8 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProduct(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 상품입니다."));
+
+        List<String> imageLinks = imageLinkRepository.findLinksByProductId(productId);
 
         List<Long> couponIds = couponProductRepository.findCouponIdsByProductId(productId);
 
@@ -78,7 +83,8 @@ public class ProductServiceImpl implements ProductService {
                 product.getCategory().getName(),
                 product.getPartner().getPartnerId(),
                 product.getPartner().getPartnerName(),
-                couponResponses
+                couponResponses,
+                imageLinks
         );
     }
 }
