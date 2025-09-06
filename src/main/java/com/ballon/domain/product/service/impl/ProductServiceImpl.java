@@ -67,6 +67,8 @@ public class ProductServiceImpl implements ProductService {
                 .map(coupon -> new CouponResponse(
                         coupon.getCouponId(),
                         coupon.getCouponName(),
+                        coupon.getDiscount(),
+                        coupon.getType().toString(),
                         coupon.getEvent().getStartDate(),
                         coupon.getEvent().getEndDate()
                 ))

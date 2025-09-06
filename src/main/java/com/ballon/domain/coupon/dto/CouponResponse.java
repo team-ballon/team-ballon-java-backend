@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 public class CouponResponse {
     private Long couponId;
     private String couponName;
+    private int discount;
+    private String discountType;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 }
