@@ -1,12 +1,11 @@
 package com.ballon.domain.product.service.impl;
 
 import com.ballon.domain.coupon.dto.CouponResponse;
-import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.repository.CouponRepository;
+import com.ballon.domain.product.dto.ProductBestRequest;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
-import com.ballon.domain.product.entity.ImageLink;
 import com.ballon.domain.product.entity.Product;
 import com.ballon.domain.product.repository.CouponProductRepository;
 import com.ballon.domain.product.repository.ImageLinkRepository;
@@ -23,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -41,10 +41,12 @@ public class ProductServiceImpl implements ProductService {
         CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
         List<Long> categoryIds = new ArrayList<>();
 
-        if (!category.children.isEmpty()) {
-            categoryIds.addAll(category.children);
-        } else {
-            categoryIds.add(req.getCategoryId());
+        if(Objects.nonNull(category)){
+            if (!category.children.isEmpty()) {
+                categoryIds.addAll(category.children);
+            } else {
+                categoryIds.add(req.getCategoryId());
+            }
         }
 
         return productRepository.search(req, categoryIds, pageable);
@@ -88,5 +90,22 @@ public class ProductServiceImpl implements ProductService {
                 couponResponses,
                 imageLinks
         );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable) {
+        CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
+        List<Long> categoryIds = new ArrayList<>();
+
+        if(Objects.nonNull(category)){
+            if (!category.children.isEmpty()) {
+                categoryIds.addAll(category.children);
+            } else {
+                categoryIds.add(req.getCategoryId());
+            }
+        }
+
+        return productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
     }
 }

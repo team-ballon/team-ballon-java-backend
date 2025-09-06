@@ -55,7 +55,7 @@ public class Product {
     private Partner partner;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CouponProduct> adminPermissions = new HashSet<>();
+    private Set<CouponProduct> couponProducts = new HashSet<>();
 
     public static Product createProduct(String productUrl, String name, Integer price, Integer quantity) {
         return Product.builder()

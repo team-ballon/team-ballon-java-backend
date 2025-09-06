@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface OrderProductRepository extends CrudRepository<OrderProduct, Long> {
+public interface OrderProductRepository extends CrudRepository<OrderProduct, Long>, CustomOrderProductRepository {
     List<OrderProduct> findByOrder_OrderId(Long orderId);
 
     @Query("SELECT op.coupon.couponId " +
