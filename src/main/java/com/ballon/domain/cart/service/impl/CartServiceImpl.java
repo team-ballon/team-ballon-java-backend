@@ -30,7 +30,6 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
 
     @Override
-    @Transactional(readOnly = true)
     public CartResponse getMyCart(Long userId) {
         Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
