@@ -111,9 +111,7 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.name,
                         product.price,
                         product.partner.partnerId,
-                        product.partner.partnerName,
-                        orderProduct.quantity.sum(),
-                        orderProduct.quantity.multiply(orderProduct.productAmount).sum()
+                        product.partner.partnerName
                 ))
                 .from(orderProduct)
                 .join(order).on(orderProduct.order.orderId.eq(order.orderId))
