@@ -1,5 +1,6 @@
 package com.ballon.domain.coupon.repository;
 
+import com.ballon.domain.coupon.dto.CouponResponse;
 import com.ballon.domain.coupon.entity.Coupon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,14 +14,25 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     List<Coupon> findAllByIdWithEvent(@Param("ids") List<Long> ids);
 
     @Query("""
-    select distinct c
-    from Coupon c
-    join c.event e
-    join com.ballon.domain.product.entity.CouponProduct cp on cp.coupon = c
-    where cp.product.id = :productId
-      and e.startDate <= :now and e.endDate >= :now
-    order by e.endDate asc
-    
-""")
-    List<Coupon> findUsableByProduct(@Param("productId") Long productId, @Param("now") LocalDateTime now);
+        select new com.ballon.domain.coupon.dto.CouponResponse(
+            c.couponId,
+            c.couponName,
+            e.startDate,
+            e.endDate
+        )
+        from Coupon c
+        join c.event e
+        where exists (
+            select 1
+            from com.ballon.domain.product.entity.CouponProduct cp
+            where cp.coupon = c
+              and cp.product.id = :productId
+        )
+          and e.startDate <= :now and e.endDate >= :now
+        order by e.endDate asc
+        """)
+    List<CouponResponse> findUsableByProduct(
+            @Param("productId") Long productId,
+            @Param("now") LocalDateTime now
+    );
 }

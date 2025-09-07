@@ -34,9 +34,6 @@ public class CouponQueryServiceImpl implements CouponQueryService {
     @Override
     public List<CouponResponse> getUsableCouponsByProduct(Long productId) {
         var now = LocalDateTime.now();
-        return couponRepository.findUsableByProduct(productId, now)
-                .stream()
-                .map(CouponResponse::from)
-                .toList();
+        return couponRepository.findUsableByProduct(productId, now);
     }
 }

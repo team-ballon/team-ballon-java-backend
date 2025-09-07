@@ -3,8 +3,11 @@ package com.ballon.domain.coupon.entity;
 import com.ballon.domain.coupon.entity.type.Type;
 import com.ballon.domain.event.entity.Event;
 import com.ballon.domain.partner.entity.Partner;
+import com.ballon.domain.product.entity.CouponProduct;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Set;
 
 
 @Entity
@@ -33,4 +36,9 @@ public class Coupon {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_id", nullable = false)
     private Partner partner;
+
+    // Coupon.java
+    @OneToMany(mappedBy = "coupon")
+    Set<CouponProduct> couponProducts;
+
 }
