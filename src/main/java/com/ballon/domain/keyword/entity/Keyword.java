@@ -33,7 +33,7 @@ public class Keyword {
     @Column(nullable = false)
     private Long count;
 
-    @Column(name = "last_keyword_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime lastSearchedAt;
 
     // 검색 기록 반영
