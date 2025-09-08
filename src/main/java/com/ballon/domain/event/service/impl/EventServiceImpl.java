@@ -27,6 +27,7 @@ public class EventServiceImpl implements EventService {
     public Page<EventSearchResponse> searchEvents(EventSearchRequest request, Pageable pageable) {
         log.info("이벤트 검색 요청: request={}, pageable={}", request, pageable);
         Page<EventSearchResponse> result = eventRepository.searchEvents(request, pageable);
+
         log.debug("이벤트 검색 결과: 총 {}건, 총 페이지 {}", result.getTotalElements(), result.getTotalPages());
         return result;
     }
