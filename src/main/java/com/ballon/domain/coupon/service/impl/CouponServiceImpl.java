@@ -1,6 +1,7 @@
 package com.ballon.domain.coupon.service.impl;
 
 import com.ballon.domain.coupon.dto.CouponResponse;
+import com.ballon.domain.coupon.dto.UserCouponResponse;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.repository.CouponRepository;
 import com.ballon.domain.coupon.service.CouponService;
@@ -14,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -36,5 +40,33 @@ public class CouponServiceImpl implements CouponService {
         Coupon coupon = couponRepository.getReferenceById(couponId);
 
         userCouponRepository.save(UserCoupon.createUserCoupon(user, coupon));
+    }
+
+    @Override
+    public List<UserCouponResponse> getUsableCouponsByUser() {
+        List<UserCoupon> userCoupons = userCouponRepository.findUsableByUser(UserUtil.getUserId(), LocalDateTime.now());
+
+        return userCoupons.stream().map(
+                uc -> new UserCouponResponse(
+                        uc.getCoupon().getCouponId(),
+                        uc.getCoupon().getCouponName(),
+                        uc.getCoupon().getDiscount(),
+                        uc.getCoupon().getType().toString()
+                )
+        ).toList();
+    }
+
+    @Override
+    public List<UserCouponResponse> findUsableByUserAndProduct(Long productId) {
+        List<UserCoupon> userCoupons = userCouponRepository.findUsableByUserAndProduct(UserUtil.getUserId(), productId, LocalDateTime.now());
+
+        return userCoupons.stream().map(
+                uc -> new UserCouponResponse(
+                        uc.getCoupon().getCouponId(),
+                        uc.getCoupon().getCouponName(),
+                        uc.getCoupon().getDiscount(),
+                        uc.getCoupon().getType().toString()
+                )
+        ).toList();
     }
 }

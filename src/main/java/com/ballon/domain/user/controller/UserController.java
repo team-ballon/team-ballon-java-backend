@@ -3,6 +3,8 @@ package com.ballon.domain.user.controller;
 import com.ballon.domain.address.dto.AddressRequest;
 import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.address.service.AddressService;
+import com.ballon.domain.coupon.dto.UserCouponResponse;
+import com.ballon.domain.coupon.service.CouponService;
 import com.ballon.domain.user.dto.PasswordUpdateRequest;
 import com.ballon.domain.user.dto.UserRegisterRequest;
 import com.ballon.domain.user.dto.UserResponse;
@@ -34,6 +36,7 @@ public class UserController {
     private final UserService userService;
     private final VerificationCodeRepository verificationCodeRepository;
     private final AddressService addressService;
+    private final CouponService couponService;
 
     @Operation(
             summary = "회원가입",
@@ -184,5 +187,34 @@ public class UserController {
         userService.updateUserPassword(passwordUpdateRequest);
 
         return ResponseEntity.noContent().build();
+    }
+
+
+    @Operation(
+            summary = "본인 쿠폰 조회",
+            description = "본인의 사용가능한 쿠폰 정보를 제공합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "쿠폰 조회 성공",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserCouponResponse.class)))
+                    )
+            }
+    )
+    @GetMapping("/me/coupons/usable")
+    public List<UserCouponResponse> getUsableCouponsByUser() {
+        return couponService.getUsableCouponsByUser();
+    }
+
+    @Operation(
+            summary = "회원이 해당 상품에서 사용할 수 있는 쿠폰 조회",
+            description = "회원이 해당 상품에서 사용할 수 있는 쿠폰 정보를 제공합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "쿠폰 조회 성공",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserCouponResponse.class)))
+                    )
+            }
+    )
+    @GetMapping("/me/products/{product-id}/coupons/usable")
+    public List<UserCouponResponse> getUsableCouponsByUser(@PathVariable("product-id") Long productId) {
+        return couponService.findUsableByUserAndProduct(productId);
     }
 }

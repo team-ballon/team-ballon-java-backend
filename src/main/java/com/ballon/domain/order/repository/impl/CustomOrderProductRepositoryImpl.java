@@ -4,6 +4,7 @@ import com.ballon.domain.order.dto.OrderSummaryResponse;
 import com.ballon.domain.order.entity.OrderProduct;
 import com.ballon.domain.order.entity.QOrder;
 import com.ballon.domain.order.entity.QOrderProduct;
+import com.ballon.domain.order.entity.type.OrderStatus;
 import com.ballon.domain.order.repository.CustomOrderProductRepository;
 import com.ballon.domain.product.entity.QProduct;
 import com.querydsl.core.types.Projections;
@@ -39,7 +40,8 @@ public class CustomOrderProductRepositoryImpl implements CustomOrderProductRepos
                 .from(orderProduct)
                 .join(orderProduct.order, order)
                 .join(orderProduct.product, product)
-                .where(order.user.userId.eq(userId))
+                .where(order.user.userId.eq(userId)
+                        .and(order.status.eq(OrderStatus.DONE)))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(orderProduct.createdAt.desc())
@@ -49,7 +51,8 @@ public class CustomOrderProductRepositoryImpl implements CustomOrderProductRepos
                 .select(orderProduct.count())
                 .from(orderProduct)
                 .join(orderProduct.order, order)
-                .where(order.user.userId.eq(userId))
+                .where(order.user.userId.eq(userId)
+                        .and(order.status.eq(OrderStatus.DONE)))
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
