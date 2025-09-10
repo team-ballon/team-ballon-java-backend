@@ -123,12 +123,14 @@ public class OrderServiceImpl implements OrderService {
                 .mapToInt(OrderProduct::getPaidAmount)
                 .sum();
 
-        if(totalAmount != paymentConfirmRequest.getAmount()) {
+        if (totalAmount != paymentConfirmRequest.getAmount()) {
             throw new BadRequestException("결제 금액 불일치.");
         }
 
+        // 주문 상태 변경
         order.updateOrderStatus(OrderStatus.DONE);
 
+        // 쿠폰 사용 처리
         List<Long> couponIds = orderProductRepository.findCouponIdsByOrderId(order.getOrderId());
         if (!couponIds.isEmpty()) {
             int usedCouponQuantity = userCouponRepository.markCouponsAsUsed(UserUtil.getUserId(), couponIds);
@@ -137,6 +139,21 @@ public class OrderServiceImpl implements OrderService {
                     UserUtil.getUserId(), usedCouponQuantity, couponIds);
         }
 
+        // === 재고 차감 처리 ===
+        for (OrderProduct orderProduct : orderProducts) {
+            Product product = orderProduct.getProduct();
+            int quantity = orderProduct.getQuantity();
+
+            if (product.getQuantity() < quantity) {
+                throw new BadRequestException("상품 재고 부족: " + product.getName());
+            }
+
+            product.decreaseQuantity(quantity);
+            log.info("상품 {} 재고 차감 완료 ({} → {})",
+                    product.getName(), product.getQuantity() + quantity, product.getQuantity());
+        }
+
+        // 응답 생성
         String firstProductName = orderProducts.getFirst().getProduct().getName();
         String orderTitle = (orderProducts.size() > 1)
                 ? firstProductName + " 외 " + (orderProducts.size() - 1) + "건"
@@ -149,6 +166,7 @@ public class OrderServiceImpl implements OrderService {
                 userRepository.getUserNameByUserId(UserUtil.getUserId())
         );
     }
+
 
     @Override
     public void failOrder(PaymentFailRequest paymentFailRequest) {
