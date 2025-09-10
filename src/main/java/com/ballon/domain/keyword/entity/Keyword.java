@@ -6,12 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "keyword",
-        uniqueConstraints = @UniqueConstraint(name = "uk_keyword_normalized", columnNames = "normalized"),
-        indexes = {
-                @Index(name = "idx_keyword_count", columnList = "count"),
-                @Index(name = "idx_keyword_last", columnList = "last_keyword_at")
-        })
+@Table(name = "keyword")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
