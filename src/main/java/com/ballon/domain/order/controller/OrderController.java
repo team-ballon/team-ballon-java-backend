@@ -2,7 +2,6 @@ package com.ballon.domain.order.controller;
 
 import com.ballon.domain.order.dto.*;
 import com.ballon.domain.order.service.OrderService;
-import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.global.UserUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
