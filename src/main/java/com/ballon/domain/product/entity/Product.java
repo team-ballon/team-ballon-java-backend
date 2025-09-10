@@ -2,6 +2,7 @@ package com.ballon.domain.product.entity;
 
 import com.ballon.domain.category.entity.Category;
 import com.ballon.domain.partner.entity.Partner;
+import com.ballon.domain.product.entity.type.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,6 +40,12 @@ public class Product {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    @Column(nullable = false)
+    private Integer minQuantity;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -57,17 +64,13 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CouponProduct> couponProducts = new HashSet<>();
 
-    public static Product createProduct(String productUrl, String name, Integer price, Integer quantity) {
-        return Product.builder()
-                .productUrl(productUrl)
-                .name(name)
-                .price(price)
-                .quantity(quantity)
-                .build();
+    public void decreaseQuantity(int quantity) {
+        this.quantity -= quantity;
     }
 
     @PrePersist
     public void prePersist() {
+        this.minQuantity = 0;
         this.createdAt = LocalDateTime.now();
     }
 }

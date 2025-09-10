@@ -6,7 +6,6 @@ import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.service.ProductService;
-import com.ballon.global.common.aop.PermissionAspect;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
     private final ProductService productService;
     private final KeywordService keywordService;
-    private final PermissionAspect permissionAspect;
 
     @Operation(
             summary = "상품 검색",

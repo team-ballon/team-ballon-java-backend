@@ -89,6 +89,8 @@ CREATE TABLE "product" (
                            "name" VARCHAR(50) NOT NULL,
                            "price" INTEGER NOT NULL,
                            "quantity" INTEGER NOT NULL,
+                           "status"  VARCHAR(20) NOT NULL CHECK ("type" IN ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK')),
+                           "min_quantity" INTEGER NULL,
                            "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            "category_id" INTEGER REFERENCES "category" ("category_id") ON DELETE SET NULL,
                            "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
@@ -106,6 +108,7 @@ CREATE TABLE "user_coupon" (
                                "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
                                "coupon_id" INTEGER NOT NULL REFERENCES "coupon" ("coupon_id"),
                                "is_used" BOOLEAN NOT NULL,
+                               "used_at" TIMESTAMP,
                                PRIMARY KEY ("user_id", "coupon_id")
 );
 
@@ -156,6 +159,7 @@ CREATE TABLE "review" (
                           "review_id" SERIAL PRIMARY KEY,
                           "detail" TEXT NOT NULL,
                           "rating" SMALLINT NOT NULL CHECK ("rating" BETWEEN 0 AND 5),
+                          "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
                           "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id")
 );
@@ -163,7 +167,7 @@ CREATE TABLE "review" (
 CREATE TABLE "event_application" (
                                      "event_application_id" SERIAL PRIMARY KEY,
                                      "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('PENDING', 'APPROVED')),
-                                     "application_date" TIMESTAMP NOT NULL,
+                                     "application_date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                      "event_id" INTEGER NOT NULL REFERENCES "event" ("event_id"),
                                      "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
@@ -190,12 +194,15 @@ CREATE TABLE "ai_report" (
 CREATE TABLE "product_application" (
                                        "product_application_id" SERIAL PRIMARY KEY,
                                        "name" VARCHAR(200) NOT NULL,
-                                       "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('ACTIVE', 'INACTIVE')),
+                                       "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('PENDING', 'APPROVED', 'DENIED')),
                                        "quantity" INTEGER NOT NULL,
                                        "price" INTEGER NOT NULL,
                                        "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('CREATE', 'UPDATE', 'REMOVE')),
                                        "application_date" TIMESTAMP NOT NULL,
-                                       "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
+                                       "min_quantity" INTEGER NOT NULL DEFAULT 0,
+                                       "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
+                                       "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id"),
+                                       "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
 CREATE TABLE "coupon_product" (
@@ -213,13 +220,22 @@ CREATE TABLE "order_product" (
                                  "product_amount" INTEGER NOT NULL,
                                  "discount_amount" INTEGER NOT NULL,
                                  "paid_amount" INTEGER NOT NULL,
-                                 "created_at" TIMESTAMP NOT NULL,
+                                 "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );
 
 CREATE TABLE "admin_permission" (
                                     "admin_id" INTEGER NOT NULL REFERENCES "admin" ("admin_id"),
                                     "permission_id" INTEGER NOT NULL REFERENCES "permission" ("permission_id"),
                                     PRIMARY KEY ("admin_id", "permission_id")
+);
+
+CREATE TABLE "purchase_order" (
+                                    "purchase_order_id" SERIAL PRIMARY KEY,
+                                    "quantity" INTEGER NOT NULL,
+                                    "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('PENDING', 'COMPLETE', 'CANCELED')),
+                                    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
+                                    "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
 -- ==== Admin 검색 최적화 ====
