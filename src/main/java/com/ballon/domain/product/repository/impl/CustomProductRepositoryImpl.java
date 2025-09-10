@@ -8,6 +8,7 @@ import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.entity.QProduct;
 import com.ballon.domain.product.repository.CustomProductRepository;
+import com.ballon.domain.review.entity.QReview;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -31,6 +32,7 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
     @Override
     public Page<ProductSearchResponse> search(ProductSearchRequest req, List<Long> categoryIds, Pageable pageable) {
         QProduct product = QProduct.product;
+        QReview review = QReview.review;
         BooleanBuilder builder = new BooleanBuilder();
 
         // --- 필터 조건 ---
@@ -71,10 +73,19 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.name,
                         product.price,
                         product.partner.partnerId,
-                        product.partner.partnerName
+                        product.partner.partnerName,
+                        review.rating.avg().coalesce(0.0),
+                        review.reviewId.countDistinct().coalesce(0L)
                 ))
                 .from(product)
+                .leftJoin(review).on(review.product.id.eq(product.id))
                 .where(builder)
+                .groupBy(product.id,
+                        product.productUrl,
+                        product.name,
+                        product.price,
+                        product.partner.partnerId,
+                        product.partner.partnerName)
                 .orderBy(getOrderSpecifier(req.getSort(), product))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -90,6 +101,7 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
         QProduct product = QProduct.product;
         QOrderProduct orderProduct = QOrderProduct.orderProduct;
         QOrder order = QOrder.order;
+        QReview review = QReview.review;
 
         BooleanBuilder builder = new BooleanBuilder()
                 .and(order.status.eq(OrderStatus.DONE))
@@ -111,11 +123,14 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.name,
                         product.price,
                         product.partner.partnerId,
-                        product.partner.partnerName
+                        product.partner.partnerName,
+                        review.rating.avg().coalesce(0.0),
+                        review.reviewId.countDistinct().coalesce(0L)
                 ))
                 .from(orderProduct)
                 .join(order).on(orderProduct.order.orderId.eq(order.orderId))
                 .join(product).on(orderProduct.product.id.eq(product.id))
+                .leftJoin(review).on(review.product.id.eq(product.id))
                 .where(builder)
                 .groupBy(product.id,
                         product.productUrl,
@@ -139,8 +154,6 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
 
         return PageableExecutionUtils.getPage(results, pageable, () -> total == null ? 0L : total);
     }
-
-
 
     private OrderSpecifier<?> getOrderSpecifier(String sort, QProduct product) {
         if (sort == null) {
