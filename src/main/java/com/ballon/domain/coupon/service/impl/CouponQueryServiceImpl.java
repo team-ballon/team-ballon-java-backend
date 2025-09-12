@@ -24,7 +24,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
 
     @Override
     public List<CouponResponse> getUsableCouponsByUser(Long userId) {
-        var now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         List<UserCoupon> rows = userCouponRepository.findUsableByUser(userId, now);
         return rows.stream()
                 .map(uc -> CouponResponse.from(uc.getCoupon()))
@@ -33,7 +33,7 @@ public class CouponQueryServiceImpl implements CouponQueryService {
 
     @Override
     public List<CouponResponse> getUsableCouponsByProduct(Long productId) {
-        var now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         return couponRepository.findUsableByProduct(productId, now);
     }
 }

@@ -20,15 +20,15 @@ public class CouponQueryController {
 
     // 회원 기준: 지금 사용할 수 있는 쿠폰
     // 예) GET /api/users/10/coupons/usable
-    @GetMapping("/users/{userId}/coupons/usable")
-    public List<CouponResponse> getUsableByUser(@PathVariable Long userId) {
+    @GetMapping("/users/{user-id}/coupons/usable")
+    public List<CouponResponse> getUsableByUser(@PathVariable("user-id") Long userId) {
         return couponQueryService.getUsableCouponsByUser(userId);
     }
 
     // 상품 기준: 지금 적용 가능한 쿠폰
     // 예) GET /api/products/100/coupons/usable
-    @GetMapping("/products/{productId}/coupons/usable")
-    public List<CouponResponse> getUsableByProduct(@PathVariable Long productId) {
+    @GetMapping("/products/{product-id}/coupons/usable")
+    public List<CouponResponse> getUsableByProduct(@PathVariable("product-id") Long productId) {
         return couponQueryService.getUsableCouponsByProduct(productId);
     }
 }
