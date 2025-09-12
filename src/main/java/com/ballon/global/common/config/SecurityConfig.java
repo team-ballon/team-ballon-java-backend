@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/api/partner/register",
                                 "/api/products/**",
-                                "/api/keywords/**"
+                                "/api/keywords/**",
+                                "/api/events/**"
                         )
                         .permitAll() // 인증 필요없음 -> filter 미실행
 

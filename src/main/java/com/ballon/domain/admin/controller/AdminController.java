@@ -7,6 +7,9 @@ import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
 import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.service.CategoryService;
+import com.ballon.domain.event.dto.EventRequest;
+import com.ballon.domain.event.dto.EventResponse;
+import com.ballon.domain.event.service.EventService;
 import com.ballon.domain.partner.dto.PartnerResponse;
 import com.ballon.domain.partner.dto.PartnerSearchRequest;
 import com.ballon.domain.partner.dto.PartnerSearchResponse;
@@ -48,6 +51,7 @@ public class AdminController {
     private final PartnerService partnerService;
     private final CategoryService categoryService;
     private final UserService userService;
+    private final EventService eventService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -263,5 +267,25 @@ public class AdminController {
     @GetMapping("/users/{user-id}")
     public UserResponse getUserByUserId(@PathVariable("user-id") Long userId) {
         return userService.getUserByUserId(userId);
+    }
+
+    @CheckPermission(PermissionType.MANAGE_EVENT)
+    @PostMapping("/events")
+    public EventResponse createEvent(@RequestBody EventRequest eventRequest) {
+        return eventService.createEvent(eventRequest);
+    }
+
+    @CheckPermission(PermissionType.MANAGE_EVENT)
+    @PutMapping("/events/{event-id}")
+    public EventResponse updateEvent(@PathVariable("event-id") Long eventId, @RequestBody EventRequest eventRequest) {
+        return eventService.updateEvent(eventId, eventRequest);
+    }
+
+    @CheckPermission(PermissionType.MANAGE_EVENT)
+    @DeleteMapping("/events/{event-id}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable("event-id") Long eventId) {
+        eventService.deleteEvent(eventId);
+
+        return ResponseEntity.noContent().build();
     }
 }

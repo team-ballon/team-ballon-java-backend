@@ -1,5 +1,6 @@
 package com.ballon.domain.order.service.impl;
 
+import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.address.repository.AddressRepository;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.entity.type.Type;
@@ -24,6 +25,8 @@ import com.ballon.global.common.exception.ConflictException;
 import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,9 +113,106 @@ public class OrderServiceImpl implements OrderService {
         return buildOrderResponse(orderRequest, order, firstProductName);
     }
 
+    @Override
+    public OrderResponse completeOrder(PaymentConfirmRequest paymentConfirmRequest) {
+        Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_OrderId(order.getOrderId());
+        int totalAmount = orderProducts.stream()
+                .mapToInt(OrderProduct::getPaidAmount)
+                .sum();
+
+        if (totalAmount != paymentConfirmRequest.getAmount()) {
+            throw new BadRequestException("결제 금액 불일치.");
+        }
+
+        // 주문 상태 변경
+        order.updateOrderStatus(OrderStatus.DONE);
+
+        // 쿠폰 사용 처리
+        List<Long> couponIds = orderProductRepository.findCouponIdsByOrderId(order.getOrderId());
+        if (!couponIds.isEmpty()) {
+            int usedCouponQuantity = userCouponRepository.markCouponsAsUsed(UserUtil.getUserId(), couponIds);
+
+            log.info("사용자 {}의 쿠폰 사용 처리 성공 (총 {}건) - 적용 쿠폰 ID: {}",
+                    UserUtil.getUserId(), usedCouponQuantity, couponIds);
+        }
+
+        // === 재고 차감 처리 ===
+        for (OrderProduct orderProduct : orderProducts) {
+            Product product = orderProduct.getProduct();
+            int quantity = orderProduct.getQuantity();
+
+            if (product.getQuantity() < quantity) {
+                throw new BadRequestException("상품 재고 부족: " + product.getName());
+            }
+
+            product.decreaseQuantity(quantity);
+            log.info("상품 {} 재고 차감 완료 ({} → {})",
+                    product.getName(), product.getQuantity() + quantity, product.getQuantity());
+        }
+
+        // 응답 생성
+        String firstProductName = orderProducts.getFirst().getProduct().getName();
+        String orderTitle = (orderProducts.size() > 1)
+                ? firstProductName + " 외 " + (orderProducts.size() - 1) + "건"
+                : firstProductName;
+
+        return new OrderResponse(
+                order.getOrderId(),
+                order.getAmount(),
+                orderTitle,
+                userRepository.getUserNameByUserId(UserUtil.getUserId())
+        );
+    }
+
+
+    @Override
+    public void failOrder(PaymentFailRequest paymentFailRequest) {
+        Order order = orderRepository.findById(paymentFailRequest.getOrderId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        order.updateOrderStatus(OrderStatus.CANCELED);
+
+        log.warn("주문 {} 결제 실패 처리 - 코드: {}, 사유: {}",
+                paymentFailRequest.getOrderId(),
+                paymentFailRequest.getCode(),
+                paymentFailRequest.getMessage());
+    }
+
+    @Override
+    public Page<OrderSummaryResponse> getOrdersByUser(Long userId, Pageable pageable) {
+        return orderProductRepository.findAllByUserId(userId, pageable);
+    }
+
+    @Override
+    public OrderDetailResponse getOrderDetail(Long orderProductId) {
+        OrderProduct op = orderProductRepository.findById(orderProductId)
+                .orElseThrow(() -> new NotFoundException("주문 내역이 없습니다."));
+
+        return OrderDetailResponse.builder()
+                .productName(op.getProduct().getName())
+                .productImageUrl(op.getProduct().getProductUrl())
+                .address(new AddressResponse(
+                        op.getOrder().getAddress().getAddressId(),
+                        op.getOrder().getAddress().getName(),
+                        op.getOrder().getAddress().getRecipient(),
+                        op.getOrder().getAddress().getContactNumber(),
+                        op.getOrder().getAddress().getBaseAddress(),
+                        op.getOrder().getAddress().getDetailAddress()
+                ))
+                .quantity(op.getQuantity())
+                .productAmount(op.getProductAmount())
+                .discountAmount(op.getDiscountAmount())
+                .paidAmount(op.getPaidAmount())
+                .createdAt(op.getCreatedAt())
+                .build();
+    }
+
     // 쿠폰 검증
     private void validateUserCoupon(UserCoupon userCoupon) {
-        if (userCoupon.getIsUsed()) {
+        if (Boolean.TRUE.equals(userCoupon.getIsUsed())) {
             throw new ConflictException("이미 사용된 쿠폰입니다.");
         }
 
@@ -154,56 +254,6 @@ public class OrderServiceImpl implements OrderService {
                 orderTitle,
                 userRepository.getUserNameByUserId(UserUtil.getUserId())
         );
-    }
-
-    @Override
-    public OrderResponse completeOrder(PaymentConfirmRequest paymentConfirmRequest) {
-        Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
-
-        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_OrderId(order.getOrderId());
-        int totalAmount = orderProducts.stream()
-                .mapToInt(OrderProduct::getPaidAmount)
-                .sum();
-
-        if(totalAmount != paymentConfirmRequest.getAmount()) {
-            throw new BadRequestException("결제 금액 불일치.");
-        }
-
-        order.updateOrderStatus(OrderStatus.DONE);
-
-        List<Long> couponIds = orderProductRepository.findCouponIdsByOrderId(order.getOrderId());
-        if (!couponIds.isEmpty()) {
-            int usedCouponQuantity = userCouponRepository.markCouponsAsUsed(UserUtil.getUserId(), couponIds);
-
-            log.info("사용자 {}의 쿠폰 사용 처리 성공 (총 {}건) - 적용 쿠폰 ID: {}",
-                    UserUtil.getUserId(), usedCouponQuantity, couponIds);
-        }
-
-        String firstProductName = orderProducts.getFirst().getProduct().getName();
-        String orderTitle = (orderProducts.size() > 1)
-                ? firstProductName + " 외 " + (orderProducts.size() - 1) + "건"
-                : firstProductName;
-
-        return new OrderResponse(
-                order.getOrderId(),
-                order.getAmount(),
-                orderTitle,
-                userRepository.getUserNameByUserId(UserUtil.getUserId())
-        );
-    }
-
-    @Override
-    public void failOrder(PaymentFailRequest paymentFailRequest) {
-        Order order = orderRepository.findById(paymentFailRequest.getOrderId())
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
-
-        order.updateOrderStatus(OrderStatus.CANCELED);
-
-        log.warn("주문 {} 결제 실패 처리 - 코드: {}, 사유: {}",
-                paymentFailRequest.getOrderId(),
-                paymentFailRequest.getCode(),
-                paymentFailRequest.getMessage());
     }
 
 }

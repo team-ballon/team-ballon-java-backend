@@ -17,8 +17,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
         select new com.ballon.domain.coupon.dto.CouponResponse(
             c.couponId,
             c.couponName,
-            c.type,
             c.discount,
+            cast(c.type as string),
             e.startDate,
             e.endDate
         )

@@ -6,12 +6,14 @@ import com.ballon.domain.keyword.repository.KeywordRepository;
 import com.ballon.domain.keyword.service.KeywordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -51,18 +53,19 @@ public class KeywordServiceImpl implements KeywordService {
             return;
         }
 
-        // 없으면 신규 생성 시도
         try {
             repository.saveAndFlush(Keyword.create(display, normalized));
             log.info("신규 키워드 저장 완료 - display: '{}'", display);
         } catch (DataIntegrityViolationException e) {
-            // 경쟁 상태로 유니크 충돌 시 다시 조회해서 touch
-            repository.findByNormalized(normalized)
-                    .ifPresent(k -> {
-                        k.touch(display);
-                        log.warn("경쟁 상태 감지: 기존 키워드 업데이트 처리 - display: '{}', count: {}",
-                                display, k.getCount());
-                    });
+            Throwable cause = e.getCause();
+            if (cause instanceof ConstraintViolationException cve
+                    && Objects.equals(cve.getConstraintName(), "uk_keyword_normalized")) {
+                // 유니크 충돌만 처리
+                repository.findByNormalized(normalized)
+                        .ifPresent(k -> k.touch(display));
+            } else {
+                throw e; // 다른 제약 위반은 그대로 전파
+            }
         }
     }
 

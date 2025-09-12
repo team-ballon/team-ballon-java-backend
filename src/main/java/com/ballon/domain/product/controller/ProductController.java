@@ -1,6 +1,7 @@
 package com.ballon.domain.product.controller;
 
 import com.ballon.domain.keyword.service.KeywordService;
+import com.ballon.domain.product.dto.ProductBestRequest;
 import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
@@ -60,5 +61,16 @@ public class ProductController {
     @GetMapping("/{product-id}")
     public ProductResponse getProduct(@PathVariable("product-id") Long productId) {
         return productService.getProduct(productId);
+    }
+
+    @Operation(
+            summary = "베스트 상품 검색",
+            description = "카테고리 id, 파트너 id로 베스트 상품을 검색합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "검색 성공",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProductSearchResponse.class))))
+    @GetMapping("/best")
+    public Page<ProductSearchResponse> searchBestProducts(ProductBestRequest productBestRequest, Pageable pageable) {
+        return productService.findMonthlyBestSellers(productBestRequest, pageable);
     }
 }

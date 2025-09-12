@@ -30,7 +30,6 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
 
     @Override
-    @Transactional(readOnly = true)
     public CartResponse getMyCart(Long userId) {
         Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
@@ -106,6 +105,7 @@ public class CartServiceImpl implements CartService {
         var products = cart.getProducts().stream()
                 .map(cp -> CartResponse.Product.builder()
                         .cartProductId(cp.getId())
+                        .productImageUrl(cp.getProduct().getProductUrl())
                         .productId(cp.getProduct().getId())
                         .name(cp.getProduct().getName())
                         .price(cp.getProduct().getPrice())

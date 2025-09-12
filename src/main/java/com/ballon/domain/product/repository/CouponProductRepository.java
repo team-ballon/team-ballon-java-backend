@@ -13,6 +13,4 @@ public interface CouponProductRepository extends CrudRepository<CouponProduct, L
 
     @Query("select cp.coupon.couponId from CouponProduct cp where cp.product.id = :productId")
     List<Long> findCouponIdsByProductId(@Param("productId") Long productId);
-
-
 }

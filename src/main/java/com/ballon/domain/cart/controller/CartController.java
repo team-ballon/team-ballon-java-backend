@@ -55,7 +55,7 @@ public class CartController {
             }
     )
     @PostMapping("/products")
-    public ResponseEntity<CartResponse> addProduct(@org.springframework.web.bind.annotation.RequestBody @Validated CartProductRequest req) {
+    public ResponseEntity<CartResponse> addProduct(@RequestBody @Validated CartProductRequest req) {
         Long userId = UserUtil.getUserId();
         CartResponse body = cartService.addProduct(userId, req);
 

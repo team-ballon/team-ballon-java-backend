@@ -22,6 +22,7 @@ public class CartResponse {
     @Builder
     public static class Product{
         private Long cartProductId;
+        private String productImageUrl;
         private Long productId;
         private String name;
         private Integer price;

@@ -12,4 +12,6 @@ public class ProductSearchResponse {
     private Integer price;
     private Long partnerId;
     private String partnerName;
+    private Double avgRating;
+    private Long reviewCount;
 }

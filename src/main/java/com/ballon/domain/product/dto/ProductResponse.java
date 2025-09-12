@@ -21,4 +21,5 @@ public class ProductResponse {
     private Long partnerId;
     private String partnerName;
     private List<CouponResponse> coupons;
+    private List<String> detailImageLinks;
 }
