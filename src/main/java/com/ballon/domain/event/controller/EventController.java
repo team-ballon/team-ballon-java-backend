@@ -1,5 +1,6 @@
 package com.ballon.domain.event.controller;
 
+import com.ballon.domain.coupon.dto.CouponPartnerResponse;
 import com.ballon.domain.event.dto.EventResponse;
 import com.ballon.domain.event.dto.EventSearchRequest;
 import com.ballon.domain.event.dto.EventSearchResponse;
@@ -47,7 +48,7 @@ public class EventController {
             @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음")
     })
     @GetMapping("/{event-id}")
-    public EventResponse getEventById(@PathVariable("event-id") Long eventId) {
-        return eventService.getEventByEventId(eventId);
+    public Page<CouponPartnerResponse> getEventById(@PathVariable("event-id") Long eventId, Pageable pageable) {
+        return eventService.getEventByEventId(eventId, pageable);
     }
 }

@@ -38,30 +38,39 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> searchProduct(ProductSearchRequest req, Pageable pageable) {
+        log.debug("상품 검색 요청: categoryId={}, keyword={}, page={}", req.getCategoryId(), req.getName(), pageable);
+
         CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
         List<Long> categoryIds = new ArrayList<>();
 
-        if(Objects.nonNull(category)){
+        if (Objects.nonNull(category)) {
             if (!category.children.isEmpty()) {
                 categoryIds.addAll(category.children);
+                log.debug("하위 카테고리 포함 검색: categoryIds={}", categoryIds);
             } else {
                 categoryIds.add(req.getCategoryId());
+                log.debug("단일 카테고리 검색: categoryId={}", req.getCategoryId());
             }
         }
 
-        return productRepository.search(req, categoryIds, pageable);
+        Page<ProductSearchResponse> result = productRepository.search(req, categoryIds, pageable);
+        log.info("상품 검색 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+        return result;
     }
-
 
     @Transactional(readOnly = true)
     @Override
     public ProductResponse getProduct(Long productId) {
+        log.debug("상품 상세 조회 요청: productId={}", productId);
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 상품입니다."));
 
         List<String> imageLinks = imageLinkRepository.findLinksByProductId(productId);
+        log.debug("상품 이미지 조회 완료: productId={}, 이미지 개수={}", productId, imageLinks.size());
 
         List<Long> couponIds = couponProductRepository.findCouponIdsByProductId(productId);
+        log.debug("상품 쿠폰 ID 조회 완료: productId={}, couponIds={}", productId, couponIds);
 
         List<CouponResponse> couponResponses = couponIds.isEmpty()
                 ? List.of()
@@ -75,6 +84,8 @@ public class ProductServiceImpl implements ProductService {
                         coupon.getEvent().getEndDate()
                 ))
                 .toList();
+
+        log.info("상품 상세 조회 완료: productId={}, 쿠폰 개수={}, 이미지 개수={}", productId, couponResponses.size(), imageLinks.size());
 
         return new ProductResponse(
                 product.getId(),
@@ -95,17 +106,23 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable) {
+        log.debug("월간 베스트셀러 조회 요청: categoryId={}, page={}", req.getCategoryId(), pageable);
+
         CategoryCacheStore.Node category = categoryCacheStore.getById(req.getCategoryId());
         List<Long> categoryIds = new ArrayList<>();
 
-        if(Objects.nonNull(category)){
+        if (Objects.nonNull(category)) {
             if (!category.children.isEmpty()) {
                 categoryIds.addAll(category.children);
+                log.debug("하위 카테고리 포함 베스트셀러 조회: categoryIds={}", categoryIds);
             } else {
                 categoryIds.add(req.getCategoryId());
+                log.debug("단일 카테고리 베스트셀러 조회: categoryId={}", req.getCategoryId());
             }
         }
 
-        return productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
+        Page<ProductSearchResponse> result = productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
+        log.info("월간 베스트셀러 조회 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+        return result;
     }
 }

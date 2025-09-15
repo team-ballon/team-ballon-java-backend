@@ -182,13 +182,13 @@ CREATE TABLE "keyword" (
 );
 
 CREATE TABLE "ai_report" (
-                             "ai_report_id" SERIAL PRIMARY KEY,
+                             "type" VARCHAR(50) PRIMARY KEY,  -- 유형별로 한 줄만
                              "title" TEXT NOT NULL,
                              "summary" TEXT,
-                             "content_format" TEXT NOT NULL,
+                             "content_format" VARCHAR(20) NOT NULL CHECK (content_format IN ('json','markdown','html')),
                              "content" TEXT,
                              "content_json" JSONB,
-                             "type" VARCHAR(50) NOT NULL
+                             "updated_at" TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE "product_application" (
@@ -321,3 +321,38 @@ CREATE INDEX idx_event_title_desc_trgm ON event USING gin ((title || ' ' || desc
 CREATE INDEX idx_event_start_end ON event (start_date, end_date);
 
 CREATE INDEX idx_event_created_at_desc ON event (created_at DESC);
+
+-- ==== Order 검색 최적화 ====
+
+-- 상태별 주문 조회
+CREATE INDEX idx_order_status ON "order"(status);
+
+-- 사용자별 최신 주문 조회
+CREATE INDEX idx_order_user_created_at ON "order"(user_id, created_at DESC);
+
+-- 결제 완료 시간 기준 조회
+CREATE INDEX idx_order_paid_at ON "order"(paid_at);
+
+-- ==== OrderProduct 검색 최적화 ====
+
+CREATE INDEX idx_order_product_product_id ON order_product(product_id);
+
+CREATE INDEX idx_order_product_order_id ON order_product(order_id);
+
+-- ==== Review 검색 최적화 ====
+
+CREATE INDEX idx_review_product_id ON review(product_id);
+
+CREATE INDEX idx_review_user_id ON review(user_id);
+
+CREATE INDEX idx_review_product_created_at ON review(product_id, created_at DESC);
+
+-- ==== PartnerSettlement 검색 최적화 ====
+
+CREATE INDEX idx_settlement_partner_period ON settlement(partner_id, period_start, period_end);
+
+-- ==== keyword 검색 최적화 ====
+
+CREATE INDEX idx_keyword_user_id ON keyword(user_id);
+
+CREATE INDEX idx_keyword_count ON keyword(count DESC);
