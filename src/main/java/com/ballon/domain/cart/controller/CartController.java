@@ -4,6 +4,7 @@ import com.ballon.domain.cart.dto.CartProductRequest;
 import com.ballon.domain.cart.dto.CartResponse;
 import com.ballon.domain.cart.service.CartService;
 import com.ballon.global.UserUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,18 +12,29 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @Tag(name = "Cart API", description = "장바구니 관련 API")
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
 public class CartController {
+
+    private final ObjectMapper objectMapper;
+
+    @PostConstruct
+    public void printMapper() {
+        log.info("NamingStrategy = {}", objectMapper.getPropertyNamingStrategy());
+    }
 
     private final CartService cartService;
 
