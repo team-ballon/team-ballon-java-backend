@@ -7,7 +7,6 @@ import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
 import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.service.CategoryService;
-import com.ballon.domain.coupon.dto.CouponPartnerResponse;
 import com.ballon.domain.event.dto.EventApplicationResponse;
 import com.ballon.domain.event.dto.EventRequest;
 import com.ballon.domain.event.dto.EventResponse;
@@ -40,7 +39,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
