@@ -282,7 +282,7 @@ public class AdminController {
     })
     @CheckPermission(PermissionType.MANAGE_EVENT)
     @PostMapping("/events")
-    public EventResponse createEvent(@RequestBody EventRequest eventRequest) {
+    public EventResponse createEvent(@RequestBody @Validated EventRequest eventRequest) {
         return eventService.createEvent(eventRequest);
     }
 
