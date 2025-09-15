@@ -2,6 +2,7 @@ package com.ballon.domain.order.service.impl;
 
 import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.address.repository.AddressRepository;
+import com.ballon.domain.cart.service.CartService;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.entity.type.Type;
 import com.ballon.domain.order.dto.*;
@@ -47,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
+    private final CartService cartService;
 
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
@@ -151,6 +153,24 @@ public class OrderServiceImpl implements OrderService {
             product.decreaseQuantity(quantity);
             log.info("상품 {} 재고 차감 완료 ({} → {})",
                     product.getName(), product.getQuantity() + quantity, product.getQuantity());
+        }
+
+        // === 선택된 상품만 장바구니에서 제거 ===
+        if (paymentConfirmRequest.getSelectedCartProductIds() != null && !paymentConfirmRequest.getSelectedCartProductIds().isEmpty()) {
+            log.info("주문 완료 후 선택된 장바구니 상품 제거 시도 - 사용자 ID: {}, 상품 ID 목록: {}", 
+                    UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds());
+            
+            try {
+                cartService.removeSelectedProducts(UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds());
+                log.info("주문 완료 후 선택된 장바구니 상품 제거 성공 - 사용자 ID: {}, 상품 수: {}", 
+                        UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds().size());
+            } catch (Exception e) {
+                log.warn("주문 완료 후 선택된 장바구니 상품 제거 실패 (주문은 정상 처리됨) - 사용자 ID: {}, 오류: {}", 
+                        UserUtil.getUserId(), e.getMessage());
+                // 장바구니 제거 실패해도 주문은 정상 처리되도록 함
+            }
+        } else {
+            log.debug("장바구니에서 온 주문이 아니므로 장바구니 제거 생략 - 사용자 ID: {}", UserUtil.getUserId());
         }
 
         // 응답 생성

@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -97,8 +98,41 @@ public class CartServiceImpl implements CartService {
         return toDto(cart);
     }
 
+    @Override
+    public void removeSelectedProducts(Long userId, List<Long> cartProductIds) {
+        log.info("선택된 장바구니 상품 제거 시도 - 사용자 ID: {}, 상품 ID 목록: {}", userId, cartProductIds);
+
+        if (cartProductIds == null || cartProductIds.isEmpty()) {
+            log.info("제거할 장바구니 상품이 없습니다 - 사용자 ID: {}", userId);
+            return;
+        }
+
+        Cart cart = cartRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new NotFoundException("장바구니가 없습니다."));
+
+        // 선택된 상품들만 제거
+        List<CartProduct> productsToRemove = cart.getProducts().stream()
+                .filter(cp -> cartProductIds.contains(cp.getId()))
+                .toList();
+
+        if (productsToRemove.isEmpty()) {
+            log.warn("선택된 상품이 장바구니에 존재하지 않습니다 - 사용자 ID: {}, 요청 상품 ID: {}", userId, cartProductIds);
+            return;
+        }
+
+        for (CartProduct product : productsToRemove) {
+            cart.removeProduct(product);
+        }
+
+        // 데이터베이스에서도 제거
+        cartProductRepository.deleteAllById(cartProductIds);
+
+        log.info("선택된 장바구니 상품 제거 완료 - 사용자 ID: {}, 제거된 상품 수: {}, 상품 ID: {}", 
+                userId, productsToRemove.size(), productsToRemove.stream().map(CartProduct::getId).toList());
+    }
+
     private CartResponse toDto(Cart cart) {
-        var products = cart.getProducts().stream()
+        List<CartResponse.Product> products = cart.getProducts().stream()
                 .map(cp -> CartResponse.Product.builder()
                         .cartProductId(cp.getId())
                         .productImageUrl(cp.getProduct().getProductUrl())
