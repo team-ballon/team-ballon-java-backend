@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +57,9 @@ public class CartController {
             }
     )
     @PostMapping("/products")
-    public ResponseEntity<CartResponse> addProduct(@RequestBody @Valid CartProductRequest req) {
+    public ResponseEntity<CartResponse> addProduct(@RequestBody @Validated CartProductRequest req) {
+        log.info("addProduct request:{}", req);
+
         Long userId = UserUtil.getUserId();
         CartResponse body = cartService.addProduct(userId, req);
 
