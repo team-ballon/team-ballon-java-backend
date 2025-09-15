@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class CartProductRequest {
+    @NotNull
     private Long productId;
+    @NotNull @Min(1)
     private Integer quantity;
 }
