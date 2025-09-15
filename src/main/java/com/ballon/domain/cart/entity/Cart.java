@@ -42,8 +42,17 @@ public class Cart {
 
     //장바구니에 아이템 추가
     public void addProduct(CartProduct cartProduct) {
-        products.add(cartProduct);
-        cartProduct.setCart(this); // 양방향 연관관계 주인 쪽(cart_id) 세팅
+        CartProduct existing = products.stream()
+                .filter(p -> p.getProduct().getId().equals(cartProduct.getProduct().getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (existing == null) {
+            products.add(cartProduct);
+            cartProduct.setCart(this);
+        } else {
+            existing.increase(cartProduct.getQuantity());
+        }
     }
 
     // 장바구니에서 아이템 제거

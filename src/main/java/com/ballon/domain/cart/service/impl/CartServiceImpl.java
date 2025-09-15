@@ -108,7 +108,7 @@ public class CartServiceImpl implements CartService {
                         .quantity(cp.getQuantity())
                         .lineAmount(cp.getProduct().getPrice() * cp.getQuantity())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         int totalQty = products.stream().mapToInt(CartResponse.Product::getQuantity).sum();
         int totalAmt = products.stream().mapToInt(CartResponse.Product::getLineAmount).sum();

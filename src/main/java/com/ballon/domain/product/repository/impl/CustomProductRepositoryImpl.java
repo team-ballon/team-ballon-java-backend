@@ -12,6 +12,8 @@ import com.ballon.domain.review.entity.QReview;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -74,18 +76,19 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.price,
                         product.partner.partnerId,
                         product.partner.partnerName,
-                        review.rating.avg().coalesce(0.0),
-                        review.reviewId.countDistinct().coalesce(0L)
+                        Expressions.asNumber(
+                                JPAExpressions.select(review.rating.avg().coalesce(0.0))
+                                        .from(review)
+                                        .where(review.product.id.eq(product.id))
+                        ),
+                        Expressions.asNumber(
+                                JPAExpressions.select(review.reviewId.count().coalesce(0L))
+                                        .from(review)
+                                        .where(review.product.id.eq(product.id))
+                        )
                 ))
                 .from(product)
-                .leftJoin(review).on(review.product.id.eq(product.id))
                 .where(builder)
-                .groupBy(product.id,
-                        product.productUrl,
-                        product.name,
-                        product.price,
-                        product.partner.partnerId,
-                        product.partner.partnerName)
                 .orderBy(getOrderSpecifier(req.getSort(), product))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -124,13 +127,20 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.price,
                         product.partner.partnerId,
                         product.partner.partnerName,
-                        review.rating.avg().coalesce(0.0),
-                        review.reviewId.countDistinct().coalesce(0L)
+                        Expressions.asNumber(
+                                JPAExpressions.select(review.rating.avg().coalesce(0.0))
+                                        .from(review)
+                                        .where(review.product.id.eq(product.id))
+                        ),
+                        Expressions.asNumber(
+                                JPAExpressions.select(review.reviewId.count().coalesce(0L))
+                                        .from(review)
+                                        .where(review.product.id.eq(product.id))
+                        )
                 ))
                 .from(orderProduct)
                 .join(order).on(orderProduct.order.orderId.eq(order.orderId))
                 .join(product).on(orderProduct.product.id.eq(product.id))
-                .leftJoin(review).on(review.product.id.eq(product.id))
                 .where(builder)
                 .groupBy(product.id,
                         product.productUrl,
