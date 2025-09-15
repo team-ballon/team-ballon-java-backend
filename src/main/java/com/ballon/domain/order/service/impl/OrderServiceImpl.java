@@ -120,6 +120,10 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
 
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new ConflictException("결제 완료는 READY 상태에서만 가능합니다. 현재 상태: " + order.getStatus());
+        }
+        
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_OrderId(order.getOrderId());
         int totalAmount = orderProducts.stream()
                 .mapToInt(OrderProduct::getPaidAmount)
@@ -192,6 +196,10 @@ public class OrderServiceImpl implements OrderService {
     public void failOrder(PaymentFailRequest paymentFailRequest) {
         Order order = orderRepository.findById(paymentFailRequest.getOrderId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new ConflictException("결제 실패는 READY 상태에서만 가능합니다. 현재 상태: " + order.getStatus());
+        }
 
         order.updateOrderStatus(OrderStatus.CANCELED);
 
