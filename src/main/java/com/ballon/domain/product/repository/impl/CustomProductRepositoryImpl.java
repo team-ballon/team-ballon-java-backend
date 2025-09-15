@@ -76,16 +76,12 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.price,
                         product.partner.partnerId,
                         product.partner.partnerName,
-                        Expressions.asNumber(
                                 JPAExpressions.select(review.rating.avg().coalesce(0.0))
                                         .from(review)
-                                        .where(review.product.id.eq(product.id))
-                        ),
-                        Expressions.asNumber(
+                                        .where(review.product.id.eq(product.id)),
                                 JPAExpressions.select(review.reviewId.count().coalesce(0L))
                                         .from(review)
                                         .where(review.product.id.eq(product.id))
-                        )
                 ))
                 .from(product)
                 .where(builder)
@@ -127,16 +123,12 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.price,
                         product.partner.partnerId,
                         product.partner.partnerName,
-                        Expressions.asNumber(
                                 JPAExpressions.select(review.rating.avg().coalesce(0.0))
                                         .from(review)
-                                        .where(review.product.id.eq(product.id))
-                        ),
-                        Expressions.asNumber(
+                                        .where(review.product.id.eq(product.id)),
                                 JPAExpressions.select(review.reviewId.count().coalesce(0L))
                                         .from(review)
                                         .where(review.product.id.eq(product.id))
-                        )
                 ))
                 .from(orderProduct)
                 .join(order).on(orderProduct.order.orderId.eq(order.orderId))
