@@ -40,10 +40,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse addProduct(Long userId, CartProductRequest req) {
-        if (req.getQuantity() == null || req.getQuantity() <= 0) {
-            throw new ValidationException("수량은 1 이상이어야 합니다.");
-        }
-
         Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
 
