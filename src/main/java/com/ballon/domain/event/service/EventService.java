@@ -9,7 +9,9 @@ import org.springframework.data.domain.Pageable;
 public interface EventService {
     Page<EventSearchResponse> searchEvents(EventSearchRequest request, Pageable pageable);
 
-    Page<CouponPartnerResponse> getEventByEventId(Long eventId, Pageable pageable);
+    EventResponse getEventByEventId(Long eventId);
+
+    Page<CouponPartnerResponse> getEventCouponsByEventId(Long eventId, Pageable pageable);
 
     EventResponse createEvent(EventRequest eventRequest);
 

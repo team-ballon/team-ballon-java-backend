@@ -38,8 +38,24 @@ public class EventServiceImpl implements EventService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<CouponPartnerResponse> getEventByEventId(Long eventId, Pageable pageable) {
+    public EventResponse getEventByEventId(Long eventId) {
         log.info("이벤트 단건 조회 요청: eventId={}", eventId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 이벤트입니다."));
+
+        return new EventResponse(
+                event.getEventId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getStartDate(),
+                event.getEndDate()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<CouponPartnerResponse> getEventCouponsByEventId(Long eventId, Pageable pageable) {
+        log.info("이벤트의 쿠폰 조회 요청: eventId={}", eventId);
 
         return couponRepository.findCouponsByEventId(eventId, pageable);
     }
