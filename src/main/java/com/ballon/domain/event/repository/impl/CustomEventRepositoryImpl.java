@@ -26,6 +26,7 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
         List<EventSearchResponse> results = queryFactory
                 .select(Projections.constructor(
                         EventSearchResponse.class,
+                        event.eventId,
                         event.title,
                         event.createdAt
                 ))
