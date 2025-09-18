@@ -50,7 +50,7 @@ public class SettlementSchedulerService {
             }
 
             // 중복 체크 (이미 생성된 정산 있으면 skip)
-            boolean exists = settlementRepository.existsByPartnerAndPeriod(partner, periodStart, periodEnd);
+            boolean exists = settlementRepository.existsByPartnerAndPeriodStartAndPeriodEnd(partner, periodStart, periodEnd);
             if (exists) {
                 log.warn("파트너 {}({}) 기간 {} ~ {} 이미 정산 생성됨, skip",
                         partner.getPartnerId(), partner.getPartnerName(), periodStart, periodEnd);

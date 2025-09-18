@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long>, CustomSettlementRepository {
-    boolean existsByPartnerAndPeriod(Partner partner, LocalDate periodStart, LocalDate periodEnd);
+    boolean existsByPartnerAndPeriodStartAndPeriodEnd(Partner partner, LocalDate periodStart, LocalDate periodEnd);
 }
