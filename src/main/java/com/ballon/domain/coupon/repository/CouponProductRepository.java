@@ -1,6 +1,6 @@
-package com.ballon.domain.product.repository;
+package com.ballon.domain.coupon.repository;
 
-import com.ballon.domain.product.entity.CouponProduct;
+import com.ballon.domain.coupon.entity.CouponProduct;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;

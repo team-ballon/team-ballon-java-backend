@@ -202,7 +202,7 @@ CREATE TABLE "product_application" (
                                        "min_quantity" INTEGER NOT NULL DEFAULT 0,
                                        "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
                                        "category_id" INTEGER NOT NULL REFERENCES "category" ("category_id"),
-                                       "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
+                                       "product_id" INTEGER NULL REFERENCES "product" ("product_id")
 );
 
 CREATE TABLE "coupon_product" (

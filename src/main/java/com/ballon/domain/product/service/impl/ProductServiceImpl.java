@@ -7,7 +7,7 @@ import com.ballon.domain.product.dto.ProductResponse;
 import com.ballon.domain.product.dto.ProductSearchRequest;
 import com.ballon.domain.product.dto.ProductSearchResponse;
 import com.ballon.domain.product.entity.Product;
-import com.ballon.domain.product.repository.CouponProductRepository;
+import com.ballon.domain.coupon.repository.CouponProductRepository;
 import com.ballon.domain.product.repository.ImageLinkRepository;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.product.service.ProductService;
