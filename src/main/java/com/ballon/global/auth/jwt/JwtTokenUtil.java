@@ -8,11 +8,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders; // Base64 디코더 import
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey; // SecretKey 타입 사용 권장
 import java.util.Date;
 
 @Component
@@ -40,26 +42,35 @@ public class JwtTokenUtil {
         return createToken(userId, REFRESH_TOKEN_VALIDITY, refreshSecret);
     }
 
-    // 공통 토큰 생성 로직
-    private String createToken(Long userId, long validity, String secret) {
+    // [수정됨] 공통 토큰 생성 로직
+    private String createToken(Long userId, long validity, String secretBase64) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + validity);
 
         Claims claims = Jwts.claims().setSubject(String.valueOf(userId));
 
+        // 1. Base64로 인코딩된 secret 문자열을 원본 바이트 배열로 디코딩합니다.
+        byte[] keyBytes = Decoders.BASE64.decode(secretBase64);
+        // 2. 디코딩된 바이트 배열로부터 안전한 SecretKey 객체를 생성합니다.
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS256) // 생성된 key 객체로 서명
                 .compact();
     }
 
-    // 토큰 유효성 검증
+    // [수정됨] 토큰 유효성 검증
     public boolean validateToken(String token, boolean isAccess) {
         try {
+            String secretBase64 = isAccess ? accessSecret : refreshSecret;
+            byte[] keyBytes = Decoders.BASE64.decode(secretBase64);
+            SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+
             Jwts.parserBuilder()
-                    .setSigningKey((isAccess ? accessSecret : refreshSecret).getBytes())
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -68,17 +79,21 @@ public class JwtTokenUtil {
         }
     }
 
-    // userId 추출
+    // [수정됨] userId 추출
     public String getUserId(String token, boolean isAccess) {
+        String secretBase64 = isAccess ? accessSecret : refreshSecret;
+        byte[] keyBytes = Decoders.BASE64.decode(secretBase64);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+
         return Jwts.parserBuilder()
-                .setSigningKey((isAccess ? accessSecret : refreshSecret).getBytes())
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
 
-    // refresh token으로 access token 재발급
+    // refresh token으로 access token 재발급 (내부 로직은 변경 없음)
     public String refresh(String refreshToken) {
         if (!validateToken(refreshToken, false)) {
             throw new UnauthorizedException("유효하지 않은 Refresh Token입니다.");
@@ -100,5 +115,5 @@ public class JwtTokenUtil {
 
         return createAccessToken(userId);
     }
-
 }
+

@@ -1,7 +1,6 @@
 package com.ballon.domain.settlement.dto;
 
 import com.ballon.domain.settlement.entity.type.SettlementStatus;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
