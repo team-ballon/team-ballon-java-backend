@@ -2,6 +2,7 @@ package com.ballon.domain.cart.service.impl;
 
 import com.ballon.domain.cart.dto.CartProductRequest;
 import com.ballon.domain.cart.dto.CartResponse;
+import com.ballon.domain.cart.dto.SelectedCartProduct;
 import com.ballon.domain.cart.entity.Cart;
 import com.ballon.domain.cart.entity.CartProduct;
 import com.ballon.domain.cart.repository.CartProductRepository;
@@ -99,36 +100,38 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void removeSelectedProducts(Long userId, List<Long> cartProductIds) {
-        log.info("선택된 장바구니 상품 제거 시도 - 사용자 ID: {}, 상품 ID 목록: {}", userId, cartProductIds);
+    public void removeSelectedProducts(Long userId, List<SelectedCartProduct> cartProducts) {
+        log.info("선택된 장바구니 상품 업데이트 시도 - 사용자 ID: {}, 상품 목록: {}", userId, cartProducts);
 
-        if (cartProductIds == null || cartProductIds.isEmpty()) {
-            log.info("제거할 장바구니 상품이 없습니다 - 사용자 ID: {}", userId);
+        if (cartProducts == null || cartProducts.isEmpty()) {
+            log.info("업데이트할 장바구니 상품이 없습니다 - 사용자 ID: {}", userId);
             return;
         }
 
         Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new NotFoundException("장바구니가 없습니다."));
 
-        // 선택된 상품들만 제거
-        List<CartProduct> productsToRemove = cart.getProducts().stream()
-                .filter(cp -> cartProductIds.contains(cp.getId()))
-                .toList();
+        for (SelectedCartProduct selected : cartProducts) {
+            cart.getProducts().stream()
+                    .filter(cp -> cp.getId().equals(selected.getSelectedCartProductId()))
+                    .findFirst()
+                    .ifPresentOrElse(cartProduct -> {
+                        Integer newQuantity = selected.getSelectedProductQuantity();
 
-        if (productsToRemove.isEmpty()) {
-            log.warn("선택된 상품이 장바구니에 존재하지 않습니다 - 사용자 ID: {}, 요청 상품 ID: {}", userId, cartProductIds);
-            return;
+                        if (newQuantity == null || newQuantity <= 0) {
+                            // 0개거나 음수면 장바구니에서 제거
+                            cart.removeProduct(cartProduct);
+                            cartProductRepository.deleteById(cartProduct.getId());
+                            log.info("상품 제거 완료 - 사용자 ID: {}, 상품 ID: {}", userId, cartProduct.getId());
+                        } else {
+                            // 수량 업데이트
+                            cartProduct.changeQuantity(newQuantity);
+                            log.info("상품 수량 업데이트 완료 - 사용자 ID: {}, 상품 ID: {}, 새 수량: {}",
+                                    userId, cartProduct.getId(), newQuantity);
+                        }
+                    }, () -> log.warn("선택된 상품이 장바구니에 존재하지 않습니다 - 사용자 ID: {}, 요청 상품 ID: {}",
+                            userId, selected.getSelectedCartProductId()));
         }
-
-        for (CartProduct product : productsToRemove) {
-            cart.removeProduct(product);
-        }
-
-        // 데이터베이스에서도 제거
-        cartProductRepository.deleteAllById(cartProductIds);
-
-        log.info("선택된 장바구니 상품 제거 완료 - 사용자 ID: {}, 제거된 상품 수: {}, 상품 ID: {}", 
-                userId, productsToRemove.size(), productsToRemove.stream().map(CartProduct::getId).toList());
     }
 
     private CartResponse toDto(Cart cart) {

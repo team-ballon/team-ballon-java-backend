@@ -1,5 +1,6 @@
 package com.ballon.domain.order.dto;
 
+import com.ballon.domain.cart.dto.SelectedCartProduct;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,5 +11,5 @@ import java.util.List;
 public class PaymentConfirmRequest {
     private Long orderId;
     private int amount;
-    private List<Long> selectedCartProductIds;
+    private List<SelectedCartProduct> selectedCartProductList;
 }

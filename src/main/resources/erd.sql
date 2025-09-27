@@ -124,7 +124,7 @@ CREATE TABLE "settlement" (
                               "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "order" (
+CREATE TABLE "orders" (
                           "order_id" SERIAL PRIMARY KEY,
                           "amount" INTEGER NOT NULL,
                           "status" VARCHAR(20) NOT NULL CHECK ("status" IN ('READY', 'IN_PROGRESS', 'WAITING_FOR_DEPOSIT', 'DONE', 'CANCELED', 'PARTIAL_CANCELED', 'ABORTED', 'EXPIRED')),

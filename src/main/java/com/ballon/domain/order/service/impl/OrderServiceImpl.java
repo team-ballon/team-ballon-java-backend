@@ -160,14 +160,14 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // === 선택된 상품만 장바구니에서 제거 ===
-        if (paymentConfirmRequest.getSelectedCartProductIds() != null && !paymentConfirmRequest.getSelectedCartProductIds().isEmpty()) {
+        if (paymentConfirmRequest.getSelectedCartProductList() != null && !paymentConfirmRequest.getSelectedCartProductList().isEmpty()) {
             log.info("주문 완료 후 선택된 장바구니 상품 제거 시도 - 사용자 ID: {}, 상품 ID 목록: {}", 
-                    UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds());
+                    UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList());
             
             try {
-                cartService.removeSelectedProducts(UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds());
+                cartService.removeSelectedProducts(UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList());
                 log.info("주문 완료 후 선택된 장바구니 상품 제거 성공 - 사용자 ID: {}, 상품 수: {}", 
-                        UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductIds().size());
+                        UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList().size());
             } catch (Exception e) {
                 log.warn("주문 완료 후 선택된 장바구니 상품 제거 실패 (주문은 정상 처리됨) - 사용자 ID: {}, 오류: {}", 
                         UserUtil.getUserId(), e.getMessage());
