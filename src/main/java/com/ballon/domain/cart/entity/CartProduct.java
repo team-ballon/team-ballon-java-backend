@@ -16,6 +16,7 @@ import lombok.*;
 public class CartProduct {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_product_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY) // 다대1 (여러 항목이 한 장바구니에)

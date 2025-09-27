@@ -1,8 +1,9 @@
 package com.ballon.domain.product.entity;
 
 import com.ballon.domain.category.entity.Category;
+import com.ballon.domain.coupon.entity.CouponProduct;
 import com.ballon.domain.partner.entity.Partner;
-import com.ballon.domain.product.entity.type.Status;
+import com.ballon.domain.product.entity.type.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,7 +42,7 @@ public class Product {
     private Integer quantity;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ProductStatus status;
 
     @Column(nullable = false)
     private Integer minQuantity;

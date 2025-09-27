@@ -1,5 +1,5 @@
 package com.ballon.domain.product.entity.type;
 
-public enum Status {
+public enum ProductStatus {
     ACTIVE, INACTIVE ,OUT_OF_STOCK
 }

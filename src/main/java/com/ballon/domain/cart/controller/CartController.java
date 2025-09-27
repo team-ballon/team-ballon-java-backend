@@ -8,17 +8,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Cart API", description = "장바구니 관련 API")
+@Slf4j
+@Tag(name = "장바구니 API", description = "장바구니 관련 API")
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
@@ -43,14 +44,11 @@ public class CartController {
     @Operation(
             summary = "장바구니 담기/증가",
             description = "특정 상품을 장바구니에 담거나 이미 담긴 상품의 수량을 증가시킵니다.",
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "상품 ID 및 수량",
-                    content = @Content(schema = @Schema(implementation = CartProductRequest.class))
-            ),
             responses = {
-                    @ApiResponse(responseCode = "201", description = "추가 성공",
-                            content = @Content(schema = @Schema(implementation = CartResponse.class))),
+                    @ApiResponse(
+                            responseCode = "201", description = "추가 성공",
+                            content = @Content(schema = @Schema(implementation = CartResponse.class))
+                    ),
                     @ApiResponse(responseCode = "400", description = "잘못된 요청")
             }
     )
@@ -61,6 +59,7 @@ public class CartController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
+
 
     @Operation(
             summary = "장바구니 수량 변경",

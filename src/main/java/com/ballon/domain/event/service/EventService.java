@@ -1,9 +1,8 @@
 package com.ballon.domain.event.service;
 
-import com.ballon.domain.event.dto.EventRequest;
-import com.ballon.domain.event.dto.EventResponse;
-import com.ballon.domain.event.dto.EventSearchRequest;
-import com.ballon.domain.event.dto.EventSearchResponse;
+import com.ballon.domain.coupon.dto.CouponPartnerResponse;
+import com.ballon.domain.event.dto.*;
+import com.ballon.domain.event.entity.type.EventStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,9 +11,15 @@ public interface EventService {
 
     EventResponse getEventByEventId(Long eventId);
 
+    Page<CouponPartnerResponse> getEventCouponsByEventId(Long eventId, Pageable pageable);
+
     EventResponse createEvent(EventRequest eventRequest);
 
     EventResponse updateEvent(Long eventId, EventRequest eventUpdateRequest);
 
     void deleteEvent(Long eventId);
+
+    Page<EventApplicationResponse> searchEventApplications(EventSearchApplicationRequest request, Pageable pageable);
+
+    void updateStatusByEventApplication(Long eventApplicationId, EventStatus eventStatus);
 }

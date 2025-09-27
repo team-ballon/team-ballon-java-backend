@@ -20,7 +20,7 @@ public class CartResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class Product{
+    public static class Product {
         private Long cartProductId;
         private String productImageUrl;
         private Long productId;

@@ -30,29 +30,46 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryCacheStore.Node createCategory(CreateCategoryRequest createCategoryRequest) {
+        // 부모 카테고리 조회 (parentId가 있으면 참조, 없으면 null)
         Category parent = (createCategoryRequest.getParentId() != null) ? repo.getReferenceById(createCategoryRequest.getParentId()) : null;
-        Category c = Category.builder().name(createCategoryRequest.getName()).parent(parent).build();
-        repo.saveAndFlush(c); // ID 확보
 
-        // 커밋 후 캐시에 반영
-        afterCommit(() -> cache.onCreated(c.getCategoryId(), c.getName(),
-                parent == null ? null : parent.getCategoryId()));
+        // 새로운 카테고리 엔티티 생성
+        Category c = Category.builder()
+                .name(createCategoryRequest.getName())
+                .parent(parent)
+                .build();
+
+        // DB에 저장 후 즉시 flush하여 ID 확보
+        repo.saveAndFlush(c);
+
+        // 트랜잭션 커밋 이후 캐시에 반영
+        afterCommit(() -> cache.onCreated(
+                c.getCategoryId(),
+                c.getName(),
+                parent == null ? null : parent.getCategoryId()
+        ));
+
+        log.info("카테고리 생성 완료: id={}, name={}", c.getCategoryId(), c.getName());
+
         return cache.getById(c.getCategoryId());
     }
 
     @Override
     public void deleteCategory(Long id) {
-        // 정책: 자식까지 함께 삭제(필요 시 방어 로직 추가)
+        // 정책: 자식 카테고리까지 함께 삭제 (추가 방어 로직 필요 시 보강 가능)
         repo.deleteById(id);
 
+        // 트랜잭션 커밋 이후 캐시에서 삭제 처리
         afterCommit(() -> cache.onDeleted(id));
+
+        log.info("카테고리 삭제 완료: id={}", id);
     }
 
     @Override
     public List<CategoryResponse> assignPartnerCategory(List<Long> categoryIds, Partner partner) {
+        // 파트너와 카테고리 매핑 엔티티 생성
         List<PartnerCategory> partnerCategories =
-                categoryIds
-                        .stream()
+                categoryIds.stream()
                         .map(categoryId -> PartnerCategory.of(
                                 partner,
                                 Category.builder()
@@ -60,21 +77,27 @@ public class CategoryServiceImpl implements CategoryService {
                                         .build()
                         ))
                         .toList();
+
         log.debug("파트너 카테고리 매핑 생성: 총 {}건", partnerCategories.size());
 
+        // DB에 저장
         partnerCategoryRepository.saveAll(partnerCategories);
         log.info("파트너 카테고리 저장 완료");
 
+        // 응답 DTO 변환
         return partnerCategories.stream()
                 .map(pc -> new CategoryResponse(
                         pc.getCategory().getCategoryId(),
                         pc.getCategory().getName()
-                )).toList();
+                ))
+                .toList();
     }
 
     private void afterCommit(Runnable r) {
+        // 트랜잭션 커밋 이후 실행되는 동작 등록
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override public void afterCommit() { r.run(); }
+            @Override
+            public void afterCommit() { r.run(); }
         });
     }
 }

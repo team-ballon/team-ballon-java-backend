@@ -35,21 +35,27 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     @Override
     public Page<ReviewResponse> getReviews(Long productId, String sort, Pageable pageable) {
-        return reviewRepository.searchReviews(productId, sort, pageable);
+        log.debug("리뷰 조회 요청: productId={}, sort={}, page={}", productId, sort, pageable);
+        Page<ReviewResponse> result = reviewRepository.searchReviews(productId, sort, pageable);
+        log.info("리뷰 조회 완료: productId={}, 총 건수={}", productId, result.getTotalElements());
+        return result;
     }
 
     @Override
     public ReviewResponse createReview(Long productId, ReviewRequest reviewRequest) {
         Long userId = UserUtil.getUserId();
+        log.debug("리뷰 작성 요청: userId={}, productId={}, rating={}", userId, productId, reviewRequest.getRating());
+
         User user = userRepository.getReferenceById(userId);
 
-        if(!orderProductRepository.existsPurchasedProductByUser(userId, productId)) {
+        if (!orderProductRepository.existsPurchasedProductByUser(userId, productId)) {
             throw new ForbiddenException("구매 이력이 없는 상품에는 리뷰를 작성할 수 없습니다.");
         }
 
         if (!productRepository.existsById(productId)) {
             throw new NotFoundException("존재하지 않는 상품입니다.");
         }
+
         Product product = productRepository.getReferenceById(productId);
 
         Review review = Review.createReview(
@@ -60,9 +66,8 @@ public class ReviewServiceImpl implements ReviewService {
         );
 
         reviewRepository.save(review);
-
-        log.info("사용자 {}가 상품 {}에 리뷰 작성: {}점, 내용='{}'",
-                user.getUserId(), productId, review.getRating(), review.getDetail());
+        log.info("리뷰 작성 성공: userId={}, productId={}, rating={}, detail='{}'",
+                userId, productId, review.getRating(), review.getDetail());
 
         return new ReviewResponse(
                 review.getDetail(),
@@ -76,13 +81,15 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewResponse updateReview(Long productId, ReviewRequest reviewRequest) {
         Long userId = UserUtil.getUserId();
+        log.debug("리뷰 수정 요청: userId={}, productId={}, rating={}", userId, productId, reviewRequest.getRating());
+
         ReviewId reviewId = new ReviewId(productId, userId);
 
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않습니다."));
 
         review.updateReview(reviewRequest.getDetail(), reviewRequest.getRating());
-        log.info("사용자 {}가 상품 {} 리뷰 수정: {}점, 내용='{}'",
+        log.info("리뷰 수정 성공: userId={}, productId={}, rating={}, detail='{}'",
                 userId, productId, review.getRating(), review.getDetail());
 
         return new ReviewResponse(
@@ -97,6 +104,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void deleteReview(Long productId) {
         Long userId = UserUtil.getUserId();
+        log.debug("리뷰 삭제 요청: userId={}, productId={}", userId, productId);
 
         ReviewId reviewId = new ReviewId(productId, userId);
 
@@ -104,6 +112,6 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않습니다."));
 
         reviewRepository.delete(review);
-        log.info("사용자 {}가 상품 {} 리뷰 삭제 완료", userId, productId);
+        log.info("리뷰 삭제 성공: userId={}, productId={}", userId, productId);
     }
 }
