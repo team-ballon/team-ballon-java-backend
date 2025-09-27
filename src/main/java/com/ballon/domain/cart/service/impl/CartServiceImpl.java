@@ -2,6 +2,7 @@ package com.ballon.domain.cart.service.impl;
 
 import com.ballon.domain.cart.dto.CartProductRequest;
 import com.ballon.domain.cart.dto.CartResponse;
+import com.ballon.domain.cart.dto.SelectedCartProduct;
 import com.ballon.domain.cart.entity.Cart;
 import com.ballon.domain.cart.entity.CartProduct;
 import com.ballon.domain.cart.repository.CartProductRepository;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,10 +42,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse addProduct(Long userId, CartProductRequest req) {
-        if (req.getQuantity() == null || req.getQuantity() <= 0) {
-            throw new ValidationException("수량은 1 이상이어야 합니다.");
-        }
-
         Cart cart = cartRepository.findByUserUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.create(User.builder().userId(userId).build())));
 
@@ -101,8 +99,43 @@ public class CartServiceImpl implements CartService {
         return toDto(cart);
     }
 
+    @Override
+    public void removeSelectedProducts(Long userId, List<SelectedCartProduct> cartProducts) {
+        log.info("선택된 장바구니 상품 업데이트 시도 - 사용자 ID: {}, 상품 목록: {}", userId, cartProducts);
+
+        if (cartProducts == null || cartProducts.isEmpty()) {
+            log.info("업데이트할 장바구니 상품이 없습니다 - 사용자 ID: {}", userId);
+            return;
+        }
+
+        Cart cart = cartRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new NotFoundException("장바구니가 없습니다."));
+
+        for (SelectedCartProduct selected : cartProducts) {
+            cart.getProducts().stream()
+                    .filter(cp -> cp.getId().equals(selected.getSelectedCartProductId()))
+                    .findFirst()
+                    .ifPresentOrElse(cartProduct -> {
+                        Integer newQuantity = selected.getSelectedProductQuantity();
+
+                        if (newQuantity == null || newQuantity <= 0) {
+                            // 0개거나 음수면 장바구니에서 제거
+                            cart.removeProduct(cartProduct);
+                            cartProductRepository.deleteById(cartProduct.getId());
+                            log.info("상품 제거 완료 - 사용자 ID: {}, 상품 ID: {}", userId, cartProduct.getId());
+                        } else {
+                            // 수량 업데이트
+                            cartProduct.changeQuantity(newQuantity);
+                            log.info("상품 수량 업데이트 완료 - 사용자 ID: {}, 상품 ID: {}, 새 수량: {}",
+                                    userId, cartProduct.getId(), newQuantity);
+                        }
+                    }, () -> log.warn("선택된 상품이 장바구니에 존재하지 않습니다 - 사용자 ID: {}, 요청 상품 ID: {}",
+                            userId, selected.getSelectedCartProductId()));
+        }
+    }
+
     private CartResponse toDto(Cart cart) {
-        var products = cart.getProducts().stream()
+        List<CartResponse.Product> products = cart.getProducts().stream()
                 .map(cp -> CartResponse.Product.builder()
                         .cartProductId(cp.getId())
                         .productImageUrl(cp.getProduct().getProductUrl())
@@ -112,7 +145,7 @@ public class CartServiceImpl implements CartService {
                         .quantity(cp.getQuantity())
                         .lineAmount(cp.getProduct().getPrice() * cp.getQuantity())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         int totalQty = products.stream().mapToInt(CartResponse.Product::getQuantity).sum();
         int totalAmt = products.stream().mapToInt(CartResponse.Product::getLineAmount).sum();

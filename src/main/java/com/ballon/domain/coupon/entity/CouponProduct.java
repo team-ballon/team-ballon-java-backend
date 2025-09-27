@@ -1,6 +1,6 @@
-package com.ballon.domain.product.entity;
+package com.ballon.domain.coupon.entity;
 
-import com.ballon.domain.coupon.entity.Coupon;
+import com.ballon.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 

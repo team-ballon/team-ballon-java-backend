@@ -2,6 +2,7 @@ package com.ballon.domain.order.service.impl;
 
 import com.ballon.domain.address.dto.AddressResponse;
 import com.ballon.domain.address.repository.AddressRepository;
+import com.ballon.domain.cart.service.CartService;
 import com.ballon.domain.coupon.entity.Coupon;
 import com.ballon.domain.coupon.entity.type.Type;
 import com.ballon.domain.order.dto.*;
@@ -11,9 +12,9 @@ import com.ballon.domain.order.entity.type.OrderStatus;
 import com.ballon.domain.order.repository.OrderProductRepository;
 import com.ballon.domain.order.repository.OrderRepository;
 import com.ballon.domain.order.service.OrderService;
-import com.ballon.domain.product.entity.CouponProduct;
+import com.ballon.domain.coupon.entity.CouponProduct;
 import com.ballon.domain.product.entity.Product;
-import com.ballon.domain.product.repository.CouponProductRepository;
+import com.ballon.domain.coupon.repository.CouponProductRepository;
 import com.ballon.domain.product.repository.ProductRepository;
 import com.ballon.domain.user.entity.UserCoupon;
 import com.ballon.domain.user.entity.id.UserCouponId;
@@ -47,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
+    private final CartService cartService;
 
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
@@ -118,6 +120,10 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(paymentConfirmRequest.getOrderId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
 
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new ConflictException("결제 완료는 READY 상태에서만 가능합니다. 현재 상태: " + order.getStatus());
+        }
+        
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_OrderId(order.getOrderId());
         int totalAmount = orderProducts.stream()
                 .mapToInt(OrderProduct::getPaidAmount)
@@ -153,6 +159,24 @@ public class OrderServiceImpl implements OrderService {
                     product.getName(), product.getQuantity() + quantity, product.getQuantity());
         }
 
+        // === 선택된 상품만 장바구니에서 제거 ===
+        if (paymentConfirmRequest.getSelectedCartProductList() != null && !paymentConfirmRequest.getSelectedCartProductList().isEmpty()) {
+            log.info("주문 완료 후 선택된 장바구니 상품 제거 시도 - 사용자 ID: {}, 상품 ID 목록: {}", 
+                    UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList());
+            
+            try {
+                cartService.removeSelectedProducts(UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList());
+                log.info("주문 완료 후 선택된 장바구니 상품 제거 성공 - 사용자 ID: {}, 상품 수: {}", 
+                        UserUtil.getUserId(), paymentConfirmRequest.getSelectedCartProductList().size());
+            } catch (Exception e) {
+                log.warn("주문 완료 후 선택된 장바구니 상품 제거 실패 (주문은 정상 처리됨) - 사용자 ID: {}, 오류: {}", 
+                        UserUtil.getUserId(), e.getMessage());
+                // 장바구니 제거 실패해도 주문은 정상 처리되도록 함
+            }
+        } else {
+            log.debug("장바구니에서 온 주문이 아니므로 장바구니 제거 생략 - 사용자 ID: {}", UserUtil.getUserId());
+        }
+
         // 응답 생성
         String firstProductName = orderProducts.getFirst().getProduct().getName();
         String orderTitle = (orderProducts.size() > 1)
@@ -172,6 +196,10 @@ public class OrderServiceImpl implements OrderService {
     public void failOrder(PaymentFailRequest paymentFailRequest) {
         Order order = orderRepository.findById(paymentFailRequest.getOrderId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 주문입니다."));
+
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new ConflictException("결제 실패는 READY 상태에서만 가능합니다. 현재 상태: " + order.getStatus());
+        }
 
         order.updateOrderStatus(OrderStatus.CANCELED);
 

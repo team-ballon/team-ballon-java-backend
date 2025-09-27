@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "event")
+@Table(name = "event_application")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -20,7 +20,7 @@ public class EventApplication {
     private Long eventApplicationId;
 
     @Enumerated(EnumType.STRING)
-    private EventStatus eventStatus;
+    private EventStatus status;
 
     @Column(nullable = false)
     private LocalDateTime applicationDate;
@@ -32,4 +32,13 @@ public class EventApplication {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_id", nullable = false)
     private Partner partner;
+
+    public void updateStatus(EventStatus status) {
+        this.status = status;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.applicationDate = LocalDateTime.now();
+    }
 }

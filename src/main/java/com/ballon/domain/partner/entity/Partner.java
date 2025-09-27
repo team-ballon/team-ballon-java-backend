@@ -47,11 +47,12 @@ public class Partner {
     @OneToMany(mappedBy = "partner", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PartnerCategory> partnerCategory = new HashSet<>();
 
-    public static Partner createPartner(String partnerName, String overview, String email) {
+    public static Partner createPartner(String partnerName, String overview, String email, User user) {
         return Partner.builder()
                 .partnerName(partnerName)
                 .overview(overview)
                 .partnerEmail(email)
+                .user(user)
                 .build();
     }
 

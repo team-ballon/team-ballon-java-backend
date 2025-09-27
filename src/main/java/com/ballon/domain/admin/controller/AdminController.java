@@ -7,13 +7,22 @@ import com.ballon.domain.admin.service.AdminService;
 import com.ballon.domain.admin.service.PermissionService;
 import com.ballon.domain.category.dto.CreateCategoryRequest;
 import com.ballon.domain.category.service.CategoryService;
+import com.ballon.domain.event.dto.EventApplicationResponse;
 import com.ballon.domain.event.dto.EventRequest;
 import com.ballon.domain.event.dto.EventResponse;
+import com.ballon.domain.event.dto.EventSearchApplicationRequest;
+import com.ballon.domain.event.entity.type.EventStatus;
 import com.ballon.domain.event.service.EventService;
 import com.ballon.domain.partner.dto.PartnerResponse;
 import com.ballon.domain.partner.dto.PartnerSearchRequest;
 import com.ballon.domain.partner.dto.PartnerSearchResponse;
 import com.ballon.domain.partner.service.PartnerService;
+import com.ballon.domain.product.dto.ProductApplicationSearchRequest;
+import com.ballon.domain.product.dto.ProductApplicationSearchResponse;
+import com.ballon.domain.product.service.ProductApplicationService;
+import com.ballon.domain.settlement.dto.SettlementSearchRequest;
+import com.ballon.domain.settlement.dto.SettlementSearchResponse;
+import com.ballon.domain.settlement.service.SettlementService;
 import com.ballon.domain.user.dto.UserResponse;
 import com.ballon.domain.user.dto.UserSearchRequest;
 import com.ballon.domain.user.dto.UserSearchResponse;
@@ -52,6 +61,8 @@ public class AdminController {
     private final CategoryService categoryService;
     private final UserService userService;
     private final EventService eventService;
+    private final ProductApplicationService productApplicationService;
+    private final SettlementService settlementService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -179,7 +190,6 @@ public class AdminController {
                     content = @Content(schema = @Schema(implementation = PartnerResponse.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    @CheckSuperAdmin
     @CheckPermission(PermissionType.MANAGE_PARTNER)
     @PutMapping("/partner/{partner-id}")
     public ResponseEntity<PartnerResponse> getPartnerByPartnerId(
@@ -269,23 +279,117 @@ public class AdminController {
         return userService.getUserByUserId(userId);
     }
 
+    @Operation(
+            summary = "이벤트 생성",
+            description = "새로운 이벤트를 생성합니다. 이벤트 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "이벤트 생성 성공",
+                    content = @Content(schema = @Schema(implementation = EventResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
     @CheckPermission(PermissionType.MANAGE_EVENT)
     @PostMapping("/events")
-    public EventResponse createEvent(@RequestBody EventRequest eventRequest) {
+    public EventResponse createEvent(@RequestBody @Validated EventRequest eventRequest) {
         return eventService.createEvent(eventRequest);
     }
 
+    @Operation(
+            summary = "이벤트 수정",
+            description = "기존 이벤트를 수정합니다. 이벤트 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이벤트 수정 성공",
+                    content = @Content(schema = @Schema(implementation = EventResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음")
+    })
     @CheckPermission(PermissionType.MANAGE_EVENT)
     @PutMapping("/events/{event-id}")
     public EventResponse updateEvent(@PathVariable("event-id") Long eventId, @RequestBody EventRequest eventRequest) {
         return eventService.updateEvent(eventId, eventRequest);
     }
 
+    @Operation(
+            summary = "이벤트 삭제",
+            description = "기존 이벤트를 삭제합니다. 이벤트 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "이벤트 삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음")
+    })
     @CheckPermission(PermissionType.MANAGE_EVENT)
     @DeleteMapping("/events/{event-id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable("event-id") Long eventId) {
         eventService.deleteEvent(eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "이벤트 신청 내역 조회",
+            description = "파트너들이 신청한 이벤트 내역을 조건에 따라 조회합니다. 이벤트 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이벤트 신청 내역 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = EventApplicationResponse.class)))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_EVENT)
+    @GetMapping("/events/application")
+    public Page<EventApplicationResponse> searchEventApplication(
+            @Parameter(name = "검색 조건") EventSearchApplicationRequest request,
+            Pageable pageable
+    ) {
+        return eventService.searchEventApplications(request, pageable);
+    }
+
+    @Operation(
+            summary = "이벤트 신청 상태 변경",
+            description = "특정 이벤트 신청의 상태를 변경합니다. (예: PENDING → APPROVED) 이벤트 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "이벤트 신청 상태 변경 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "해당 이벤트 신청을 찾을 수 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_EVENT)
+    @PutMapping("/events/application/{application-id}")
+    public ResponseEntity<Void> updateApplicationStatus(
+            @PathVariable("application-id") Long applicationId,
+            @RequestBody EventStatus status
+            ) {
+        eventService.updateStatusByEventApplication(applicationId, status);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "상품 관련 신청 내역 조회",
+            description = "파트너들이 신청한 상품 내역을 조건에 따라 조회합니다. 상품 관리 권한을 가진 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이벤트 신청 내역 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProductApplicationSearchResponse.class)))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @CheckPermission(PermissionType.MANAGE_PRODUCT)
+    @GetMapping("/products/application")
+    public Page<ProductApplicationSearchResponse> searchProductApplication(ProductApplicationSearchRequest request, Pageable pageable) {
+        return productApplicationService.searchApplications(request, pageable);
+    }
+
+    @Operation(
+            summary = "정산 내역 조회",
+            description = "파트너들의 정산 내역을 조건에 따라 조회합니다. 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "정산 신청 내역 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = SettlementSearchResponse.class)))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @GetMapping("/settlement")
+    public Page<SettlementSearchResponse> searchSettlement(SettlementSearchRequest request, Pageable pageable) {
+        return settlementService.searchSettlements(request, pageable);
     }
 }
