@@ -17,16 +17,19 @@ public class AiReport {
     @Enumerated(EnumType.STRING)
     private AiReportType aiReportType;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @Column(nullable = false)
     private String contentFormat;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(columnDefinition = "JSONB")
     private String contentJson;
 
     private LocalDateTime createdAt;
