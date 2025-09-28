@@ -188,7 +188,7 @@ CREATE TABLE "ai_report" (
                              "content_format" VARCHAR(20) NOT NULL CHECK (content_format IN ('json','markdown','html')),
                              "content" TEXT,
                              "content_json" JSONB,
-                             "updated_at" TIMESTAMP DEFAULT NOW()
+                             "created_at" TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE "product_application" (

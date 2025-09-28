@@ -20,6 +20,9 @@ import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.domain.product.dto.ProductApplicationSearchRequest;
 import com.ballon.domain.product.dto.ProductApplicationSearchResponse;
 import com.ballon.domain.product.service.ProductApplicationService;
+import com.ballon.domain.report.dto.AiReportResponse;
+import com.ballon.domain.report.entity.type.AiReportType;
+import com.ballon.domain.report.service.AiReportService;
 import com.ballon.domain.settlement.dto.SettlementSearchRequest;
 import com.ballon.domain.settlement.dto.SettlementSearchResponse;
 import com.ballon.domain.settlement.service.SettlementService;
@@ -63,6 +66,7 @@ public class AdminController {
     private final EventService eventService;
     private final ProductApplicationService productApplicationService;
     private final SettlementService settlementService;
+    private final AiReportService aiReportService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -391,5 +395,10 @@ public class AdminController {
     @GetMapping("/settlement")
     public Page<SettlementSearchResponse> searchSettlement(SettlementSearchRequest request, Pageable pageable) {
         return settlementService.searchSettlements(request, pageable);
+    }
+
+    @GetMapping("/ai-report")
+    public AiReportResponse getAiReportResponseByAiReportType(@RequestParam AiReportType aiReportType) {
+        return aiReportService.getAiReportResponseByAiReportType(aiReportType);
     }
 }
