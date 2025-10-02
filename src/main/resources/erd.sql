@@ -183,7 +183,8 @@ CREATE TABLE "keyword" (
 );
 
 CREATE TABLE "ai_report" (
-                             "type" VARCHAR(50) PRIMARY KEY,  -- 유형별로 한 줄만
+                             "ai_report_id" SERIAL PRIMARY KEY,
+                             "type" VARCHAR(50),  -- 유형별로 한 줄만
                              "title" TEXT NOT NULL,
                              "summary" TEXT,
                              "content_format" VARCHAR(20) NOT NULL CHECK (content_format IN ('json','markdown','html')),
