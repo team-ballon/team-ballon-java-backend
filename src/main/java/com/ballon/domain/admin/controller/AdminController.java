@@ -407,7 +407,7 @@ public class AdminController {
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping("/ai-report")
-    public AiReportResponse getAiReportResponseByAiReportType(@RequestParam AiReportType aiReportType) {
-        return aiReportService.getAiReportResponseByAiReportType(aiReportType);
+    public AiReportResponse getAiReportResponseByAiReportType(@RequestParam String aiReportType) {
+        return aiReportService.getAiReportResponseByAiReportType(AiReportType.fromValue(aiReportType));
     }
 }
