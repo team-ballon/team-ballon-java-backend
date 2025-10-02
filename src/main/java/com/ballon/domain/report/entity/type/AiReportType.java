@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
 public enum AiReportType {
     REPEAT_RATE_REPORT("repeat_rate_report"),
@@ -18,19 +20,17 @@ public enum AiReportType {
         this.value = value;
     }
 
-    @JsonValue   // JSON 직렬화할 때 value 사용
-    public String getValue() {
-        return value;
+    @JsonCreator
+    public static AiReportType fromValue(String value) {
+        return Arrays.stream(AiReportType.values())
+                .filter(t -> t.value.equalsIgnoreCase(value)) // 소문자 스네이크 매칭
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown type: " + value));
     }
 
-    @JsonCreator // JSON 역직렬화할 때 value로 Enum 매핑
-    public static AiReportType fromValue(String value) {
-        for (AiReportType type : AiReportType.values()) {
-            if (type.getValue().equals(value)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException("Unknown AiReportType: " + value);
+    @JsonValue
+    public String toValue() {
+        return this.value; // 응답 내려줄 때도 소문자 스네이크로
     }
 }
 
