@@ -1,6 +1,7 @@
 package com.ballon.domain.report.entity;
 
 import com.ballon.domain.report.entity.type.AiReportType;
+import com.ballon.domain.report.entity.type.AiReportTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class AiReport {
     @Id
     @Column(name = "type", nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = AiReportTypeConverter.class)
     private AiReportType aiReportType;
 
     @Column(nullable = false, columnDefinition = "TEXT")

@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -17,6 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationCodeServiceImpl {
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int RANDOM_CODE_LENGTH = 6;
     private static final long EXPIRATION_MILLIS = 600000;
     private final EmailService emailService;
@@ -27,7 +31,7 @@ public class VerificationCodeServiceImpl {
         log.info("인증 코드 발송 시도 - 이메일: {}", email);
 
         String code = generateRandomCode();
-        VerificationCode vc = VerificationCode.of(email, code, LocalDateTime.now().plusNanos(EXPIRATION_MILLIS * 1_000_000));
+        VerificationCode vc = VerificationCode.of(email, code, LocalDateTime.now().plus(Duration.ofMillis(EXPIRATION_MILLIS)));
         repository.save(vc);
 
         String title = "[BALA] 이메일 인증 코드";
@@ -92,10 +96,8 @@ public class VerificationCodeServiceImpl {
     }
 
     private String generateRandomCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        return ThreadLocalRandom.current()
-                .ints(RANDOM_CODE_LENGTH, 0, chars.length())
-                .mapToObj(chars::charAt)
+        return SECURE_RANDOM.ints(RANDOM_CODE_LENGTH, 0, CHARS.length())
+                .mapToObj(CHARS::charAt)
                 .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
                 .toString();
     }

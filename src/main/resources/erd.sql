@@ -100,6 +100,7 @@ CREATE TABLE "coupon" (
                           "coupon_id" SERIAL PRIMARY KEY,
                           "coupon_name" VARCHAR(255) NOT NULL,
                           "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('PERCENT', 'FIXED')),
+                          "discount_value" INTEGER NOT NULL,
                           "event_id" INTEGER NOT NULL REFERENCES "event" ("event_id"),
                           "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );

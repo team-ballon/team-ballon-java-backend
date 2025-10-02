@@ -62,7 +62,7 @@ public class CouponServiceImpl implements CouponService {
                 uc -> new UserCouponResponse(
                         uc.getCoupon().getCouponId(),
                         uc.getCoupon().getCouponName(),
-                        uc.getCoupon().getDiscount(),
+                        uc.getCoupon().getDiscountValue(),
                         uc.getCoupon().getType().toString()
                 )
         ).toList();
@@ -81,7 +81,7 @@ public class CouponServiceImpl implements CouponService {
                 uc -> new UserCouponResponse(
                         uc.getCoupon().getCouponId(),
                         uc.getCoupon().getCouponName(),
-                        uc.getCoupon().getDiscount(),
+                        uc.getCoupon().getDiscountValue(),
                         uc.getCoupon().getType().toString()
                 )
         ).toList();

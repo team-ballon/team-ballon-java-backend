@@ -397,6 +397,15 @@ public class AdminController {
         return settlementService.searchSettlements(request, pageable);
     }
 
+    @Operation(
+            summary = "AI 리포트 조회",
+            description = "AI 리포트를 타입에 따라 조회합니다. 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "AI 리포트 조회 성공",
+                    content = @Content(schema = @Schema(implementation = AiReportResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
     @GetMapping("/ai-report")
     public AiReportResponse getAiReportResponseByAiReportType(@RequestParam AiReportType aiReportType) {
         return aiReportService.getAiReportResponseByAiReportType(aiReportType);
