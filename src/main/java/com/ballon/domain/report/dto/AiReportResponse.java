@@ -16,4 +16,13 @@ public class AiReportResponse {
     private String content;
     private String contentJson;
     private LocalDateTime createdAt;
+
+    @Override
+    public String toString() {
+        return "AiReportResponse{" +
+                "aiReportType=" + aiReportType +
+                ", title='" + title + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
