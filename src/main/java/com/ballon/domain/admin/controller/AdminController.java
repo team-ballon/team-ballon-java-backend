@@ -410,8 +410,6 @@ public class AdminController {
     })
     @GetMapping("/ai-report")
     public AiReportResponse getAiReportResponseByAiReportType(@RequestParam("ai_report_type") String aiReportType) {
-        log.info("ai_report_type={} and fromValue = {}", aiReportType, AiReportType.fromValue(aiReportType));
-
         return aiReportService.getAiReportResponseByAiReportType(AiReportType.fromValue(aiReportType));
     }
 }

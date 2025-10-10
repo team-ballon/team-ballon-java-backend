@@ -12,7 +12,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.UUID;
 
 @Slf4j
 @RestControllerAdvice

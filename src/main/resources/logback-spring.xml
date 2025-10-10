@@ -12,7 +12,8 @@
             <totalSizeCap>2GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <!-- 시간대 명시 : KST -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,Asia/Seoul} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
