@@ -4,6 +4,7 @@ import com.ballon.global.common.response.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -17,6 +18,7 @@ import java.io.IOException;
  * 표준화된 JSON 에러 응답을 반환한다.
  */
 @Component
+@Slf4j
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     // JSON 직렬화를 위한 ObjectMapper 인스턴스
@@ -35,9 +37,19 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
+        // 요청 URI와 인증 실패 원인을 로그로 출력
+        String requestURI = request.getRequestURI();
+        String authHeader = request.getHeader("Authorization");
+        log.info("[Auth Fail] 요청 URI: {}", requestURI);
+        log.info("[Auth Fail] Authorization 헤더: {}", authHeader);
+        log.info("[Auth Fail] 예외 메시지: {}", authException.getMessage());
+
         // 공통 에러 응답 객체 생성 (code: "UNAUTHORIZED", message: "Authentication is required.")
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                "Authentication is required.", HttpStatus.UNAUTHORIZED.value());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Authentication is required.",
+                HttpStatus.UNAUTHORIZED.value()
+        );
 
         // 응답 헤더에 JSON 콘텐츠 타입 설정
         response.setContentType("application/json");
