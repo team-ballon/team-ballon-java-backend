@@ -47,15 +47,12 @@ public class JwtTokenUtil {
         byte[] keyBytes = Decoders.BASE64.decode(secretBase64);
         SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-
-        log.info("토큰 생성: userId={}, 만료시간={}, token[{}]", userId, expiry, maskToken(token));
-        return token;
     }
 
     public boolean validateToken(String token, boolean isAccess) {
@@ -73,9 +70,6 @@ public class JwtTokenUtil {
             Date now = new Date();
             Date expiry = claims.getExpiration();
             long remainingMillis = expiry.getTime() - now.getTime();
-
-            log.info("토큰 검증 성공: userId={}, 현재시간={}, 만료시간={}, 남은시간={}ms, token[{}]",
-                    claims.getSubject(), now, expiry, remainingMillis, maskToken(token));
 
             if (remainingMillis <= 0) {
                 log.warn("토큰 만료됨: userId={}, token[{}]", claims.getSubject(), maskToken(token));
@@ -100,9 +94,7 @@ public class JwtTokenUtil {
                 .parseClaimsJws(token)
                 .getBody();
 
-        String userId = claims.getSubject();
-        log.debug("토큰에서 userId 추출: userId={}, token[{}]", userId, maskToken(token));
-        return userId;
+        return claims.getSubject();
     }
 
     public String createAccessToken(Long userId) {
@@ -114,7 +106,6 @@ public class JwtTokenUtil {
     }
 
     public String refresh(String refreshToken) {
-        log.info("Refresh 요청: token[{}]", maskToken(refreshToken));
 
         if (!validateToken(refreshToken, false)) {
             throw new UnauthorizedException("유효하지 않은 Refresh Token입니다.");
@@ -134,9 +125,6 @@ public class JwtTokenUtil {
             throw new UnauthorizedException("Refresh Token이 일치하지 않습니다.");
         }
 
-        String newAccessToken = createAccessToken(userId);
-        log.info("Access Token 재발급: userId={}, token[{}]", userId, maskToken(newAccessToken));
-
-        return newAccessToken;
+        return createAccessToken(userId);
     }
 }

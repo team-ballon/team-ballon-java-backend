@@ -40,9 +40,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         // 요청 URI와 인증 실패 원인을 로그로 출력
         String requestURI = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
-        log.info("[Auth Fail] 요청 URI: {}", requestURI);
-        log.info("[Auth Fail] Authorization 헤더: {}", authHeader);
-        log.info("[Auth Fail] 예외 메시지: {}", authException.getMessage());
+        log.info("[Auth Fail] 요청 URI: {}, Authorization 헤더: {} -\n예외 메시지: {}", requestURI, authHeader, authException.getMessage());
 
         // 공통 에러 응답 객체 생성 (code: "UNAUTHORIZED", message: "Authentication is required.")
         ErrorResponse errorResponse = new ErrorResponse(
