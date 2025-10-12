@@ -37,15 +37,37 @@
 
     <!-- 운영 환경 (release, prod) -->
     <springProfile name="release,prod">
-        <root level="DEBUG">
+        <!--
+        ═══════════════════════════════════════════════════════════════
+        운영 환경 로그 레벨 설정
+        ═══════════════════════════════════════════════════════════════
+
+        상세 로그 보기 (현재 설정):
+           root level="DEBUG"
+           GlobalResponseWrapper level="DEBUG"
+           SQL level="DEBUG"
+
+        간결한 로그 (에러만):
+           root level="INFO"
+           GlobalResponseWrapper level="INFO"
+           SQL level="WARN"
+
+        변경 방법: 아래 level 값만 수정하고 재배포
+        ═══════════════════════════════════════════════════════════════
+        -->
+
+        <!-- 전체 로그 레벨: DEBUG=상세, INFO=일반, WARN=경고만, ERROR=에러만 -->
+        <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </root>
-        <!-- 응답 로깅 활성화 (DEBUG 레벨) -->
-        <logger name="com.ballon.global.common.response.GlobalResponseWrapper" level="DEBUG"/>
-        <!-- SQL 로그 표시 -->
-        <logger name="org.hibernate.SQL" level="DEBUG"/>
-        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+
+        <!-- API 응답 로깅: DEBUG=표시, INFO=숨김 -->
+        <logger name="com.ballon.global.common.response.GlobalResponseWrapper" level="INFO"/>
+
+        <!-- SQL 쿼리 로깅: DEBUG=표시, WARN=숨김 -->
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>
     </springProfile>
 
 </configuration>

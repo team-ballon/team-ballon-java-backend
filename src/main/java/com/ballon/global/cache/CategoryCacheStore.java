@@ -29,6 +29,17 @@ public class CategoryCacheStore {
             this.parentId = parentId;
             this.children = new ArrayList<>();
         }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "children size=" + children.size() +
+                    ", parentId=" + parentId +
+                    ", depth=" + depth +
+                    ", name='" + name + '\'' +
+                    ", id=" + id +
+                    '}';
+        }
     }
 
     private final Map<Long, Node> byId = new HashMap<>();
@@ -85,7 +96,17 @@ public class CategoryCacheStore {
         }
     }
 
-    public record CategoryTree(Long id, String name, int depth, List<CategoryTree> children) {}
+    public record CategoryTree(Long id, String name, int depth, List<CategoryTree> children) {
+        @Override
+        public String toString() {
+            return "CategoryTree{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", depth=" + depth +
+                    ", children size=" + (children == null ? 0 : children.size()) +
+                    '}';
+        }
+    }
 
     public List<CategoryTree> getCategoryTree() {
         lock.readLock().lock();
