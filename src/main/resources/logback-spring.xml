@@ -6,7 +6,7 @@
     <!-- Console Appender (개발 환경용) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Seoul} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -20,7 +20,7 @@
             <totalSizeCap>2GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Seoul} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -37,25 +37,6 @@
 
     <!-- 운영 환경 (release, prod) -->
     <springProfile name="release,prod">
-        <!--
-        ═══════════════════════════════════════════════════════════════
-        운영 환경 로그 레벨 설정
-        ═══════════════════════════════════════════════════════════════
-
-        상세 로그 보기 (현재 설정):
-           root level="DEBUG"
-           GlobalResponseWrapper level="DEBUG"
-           SQL level="DEBUG"
-
-        간결한 로그 (에러만):
-           root level="INFO"
-           GlobalResponseWrapper level="INFO"
-           SQL level="WARN"
-
-        변경 방법: 아래 level 값만 수정하고 재배포
-        ═══════════════════════════════════════════════════════════════
-        -->
-
         <!-- 전체 로그 레벨: DEBUG=상세, INFO=일반, WARN=경고만, ERROR=에러만 -->
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
