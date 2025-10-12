@@ -240,6 +240,12 @@ CREATE TABLE "purchase_order" (
                                     "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
 );
 
+CREATE TABLE "wishlist" (
+                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
+                            "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
+                            PRIMARY KEY ("user_id", "product_id")
+);
+
 -- ==== Admin 검색 최적화 ====
 
 -- 이유: user 테이블과 JOIN 시 사용
@@ -354,7 +360,5 @@ CREATE INDEX idx_review_product_created_at ON review(product_id, created_at DESC
 CREATE INDEX idx_settlement_partner_period ON settlement(partner_id, period_start, period_end);
 
 -- ==== keyword 검색 최적화 ====
-
-CREATE INDEX idx_keyword_user_id ON keyword(user_id);
 
 CREATE INDEX idx_keyword_count ON keyword(count DESC);

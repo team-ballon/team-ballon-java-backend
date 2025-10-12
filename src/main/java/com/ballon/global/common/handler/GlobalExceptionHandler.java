@@ -3,6 +3,9 @@ package com.ballon.global.common.handler;
 import com.ballon.global.common.exception.BaseException;
 import com.ballon.global.common.response.ErrorResponse;
 import com.ballon.global.common.response.Meta;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,15 @@ import java.util.UUID;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final ObjectMapper objectMapper;
+
+    public GlobalExceptionHandler() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
     /**
      * 유효성 검사 실패 시 발생하는 예외 처리.
      * MethodArgumentNotValidException 또는 BindException을 처리하며,
@@ -34,9 +46,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ErrorResponse> handleValidationExceptions(Exception ex) {
-        log.error("ValidationException handled: {}", ex.getMessage(), ex);
-
         ErrorResponse errorResponse = new ErrorResponse("VALIDATION_ERROR", "입력 데이터에 오류가 있습니다.", HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
+
+        logError("ValidationException", errorResponse, ex);
 
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(errorResponse);
@@ -51,9 +63,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
-        log.error("BaseException handled: {}", ex.getMessage(), ex);
-
         ErrorResponse errorResponse = new ErrorResponse(ex.getCode(), ex.getDetails(), ex.getStatus().value(), ex.getMessage());
+
+        logError("BaseException", errorResponse, ex);
 
         return ResponseEntity.status(ex.getStatus())
                 .body(errorResponse);
@@ -68,12 +80,29 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception ex) {
-        log.error("Unhandled exception occurred: {}", ex.getMessage(), ex); // 에러 레벨로 로그 기록
-
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        logError("UnhandledException", errorResponse, ex);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorResponse);
+    }
+
+    /**
+     * 에러 로깅 헬퍼 메서드
+     * JSON 형태로 에러 응답을 보기 좋게 출력
+     */
+    private void logError(String exceptionType, ErrorResponse errorResponse, Exception ex) {
+        try {
+            String jsonError = objectMapper.writeValueAsString(errorResponse);
+            log.error("\n[API Error - {}]\n{}\nException: {}",
+                    exceptionType, jsonError, ex.getMessage(), ex);
+        } catch (Exception e) {
+            // JSON 직렬화 실패 시 기본 로깅
+            log.error("{} - code: {}, message: {}, status: {}",
+                    exceptionType, errorResponse.getCode(), errorResponse.getMessage(),
+                    errorResponse.getStatus(), ex);
+        }
     }
 
 }

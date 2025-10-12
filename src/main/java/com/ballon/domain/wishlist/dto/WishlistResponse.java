@@ -1,25 +1,25 @@
-package com.ballon.domain.product.dto;
+package com.ballon.domain.wishlist.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Getter
 @AllArgsConstructor
-public class ProductSearchResponse {
+@Getter
+public class WishlistResponse {
     private Long productId;
     private String productUrl;
     private String name;
     private Integer price;
-    private Double avgRating;
+    private double avgRating;
     private Long reviewCount;
 
     @Override
     public String toString() {
-        return "ProductSearchResponse{" +
-                "name='" + name + '\'' +
-                ", price=" + price +
+        return "WishlistResponse{" +
+                "reviewCount=" + reviewCount +
                 ", avgRating=" + avgRating +
-                ", reviewCount=" + reviewCount +
+                ", price=" + price +
+                ", name='" + name + '\'' +
                 ", productId=" + productId +
                 '}';
     }
