@@ -10,8 +10,17 @@ public class ProductSearchResponse {
     private String productUrl;
     private String name;
     private Integer price;
-    private Long partnerId;
-    private String partnerName;
     private Double avgRating;
     private Long reviewCount;
+
+    @Override
+    public String toString() {
+        return "ProductSearchResponse{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                ", avgRating=" + avgRating +
+                ", reviewCount=" + reviewCount +
+                ", productId=" + productId +
+                '}';
+    }
 }

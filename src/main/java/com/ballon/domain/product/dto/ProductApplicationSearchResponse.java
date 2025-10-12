@@ -4,11 +4,13 @@ import com.ballon.domain.product.entity.type.ProductApplicationStatus;
 import com.ballon.domain.product.entity.type.ProductApplicationType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class ProductApplicationSearchResponse {
     private Long applicationId;              // 신청 ID
     private String name;                     // 신청 상품명

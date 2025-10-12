@@ -100,6 +100,7 @@ CREATE TABLE "coupon" (
                           "coupon_id" SERIAL PRIMARY KEY,
                           "coupon_name" VARCHAR(255) NOT NULL,
                           "type" VARCHAR(20) NOT NULL CHECK ("type" IN ('PERCENT', 'FIXED')),
+                          "discount_value" INTEGER NOT NULL,
                           "event_id" INTEGER NOT NULL REFERENCES "event" ("event_id"),
                           "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id")
 );
@@ -182,13 +183,14 @@ CREATE TABLE "keyword" (
 );
 
 CREATE TABLE "ai_report" (
-                             "type" VARCHAR(50) PRIMARY KEY,  -- 유형별로 한 줄만
+                             "ai_report_id" SERIAL PRIMARY KEY,
+                             "type" VARCHAR(50),  -- 유형별로 한 줄만
                              "title" TEXT NOT NULL,
                              "summary" TEXT,
                              "content_format" VARCHAR(20) NOT NULL CHECK (content_format IN ('json','markdown','html')),
                              "content" TEXT,
                              "content_json" JSONB,
-                             "updated_at" TIMESTAMP DEFAULT NOW()
+                             "created_at" TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE "product_application" (
@@ -236,6 +238,12 @@ CREATE TABLE "purchase_order" (
                                     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                     "partner_id" INTEGER NOT NULL REFERENCES "partner" ("partner_id"),
                                     "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id")
+);
+
+CREATE TABLE "wishlist" (
+                            "user_id" INTEGER NOT NULL REFERENCES "user" ("user_id"),
+                            "product_id" INTEGER NOT NULL REFERENCES "product" ("product_id"),
+                            PRIMARY KEY ("user_id", "product_id")
 );
 
 -- ==== Admin 검색 최적화 ====
@@ -352,7 +360,5 @@ CREATE INDEX idx_review_product_created_at ON review(product_id, created_at DESC
 CREATE INDEX idx_settlement_partner_period ON settlement(partner_id, period_start, period_end);
 
 -- ==== keyword 검색 최적화 ====
-
-CREATE INDEX idx_keyword_user_id ON keyword(user_id);
 
 CREATE INDEX idx_keyword_count ON keyword(count DESC);

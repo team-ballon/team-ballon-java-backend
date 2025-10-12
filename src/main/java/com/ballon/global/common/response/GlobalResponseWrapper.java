@@ -1,5 +1,8 @@
 package com.ballon.global.common.response;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -12,11 +15,19 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.UUID;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
+
+    private final ObjectMapper objectMapper;
+
+    public GlobalResponseWrapper() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
@@ -49,15 +60,50 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
             return body; // 이미 래핑된 경우 중복 래핑 방지
         }
 
+        if (body instanceof ErrorResponse) {
+            // ErrorResponse는 이미 표준 형식이므로 래핑하지 않음
+            logErrorResponse((ErrorResponse) body);
+            return body;
+        }
+
         if (body instanceof byte[] || MediaType.APPLICATION_OCTET_STREAM.equals(selectedContentType)) {
             return body;
         }
 
         CommonResponse<Object> commonResponse = new CommonResponse<>(body);
 
-        log.info(commonResponse.toString());
+        // 로깅: DEBUG 레벨로 변경 (운영 환경에서는 비활성화)
+        if (log.isDebugEnabled()) {
+            try {
+                String jsonLog = objectMapper.writeValueAsString(commonResponse);
+                // 응답 크기 제한 (5000자 이상이면 요약)
+                if (jsonLog.length() > 5000) {
+                    log.debug("\n[API Response] (truncated, size: {})\n{}\n...(truncated)",
+                            jsonLog.length(), jsonLog.substring(0, 5000));
+                } else {
+                    log.debug("\n[API Response]\n{}", jsonLog);
+                }
+            } catch (Exception e) {
+                log.debug("Response data type: {}", body.getClass().getSimpleName());
+            }
+        }
 
         return commonResponse;
+    }
+
+    /**
+     * ErrorResponse 로깅 헬퍼 메서드
+     */
+    private void logErrorResponse(ErrorResponse errorResponse) {
+        if (log.isDebugEnabled()) {
+            try {
+                String jsonLog = objectMapper.writeValueAsString(errorResponse);
+                log.debug("\n[API Error Response]\n{}", jsonLog);
+            } catch (Exception e) {
+                log.debug("Error response - code: {}, status: {}",
+                        errorResponse.getCode(), errorResponse.getStatus());
+            }
+        }
     }
 }
 

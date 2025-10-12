@@ -19,4 +19,17 @@ public class OrderDetailResponse {
     private int discountAmount;
     private int paidAmount;
     private LocalDateTime createdAt;
+
+    @Override
+    public String toString() {
+        return "OrderDetailResponse{" +
+                "createdAt=" + createdAt +
+                ", paidAmount=" + paidAmount +
+                ", discountAmount=" + discountAmount +
+                ", productAmount=" + productAmount +
+                ", quantity=" + quantity +
+                ", address=" + address +
+                ", productName='" + productName + '\'' +
+                '}';
+    }
 }

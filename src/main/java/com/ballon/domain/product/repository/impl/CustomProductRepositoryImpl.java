@@ -73,8 +73,6 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.productUrl,
                         product.name,
                         product.price,
-                        product.partner.partnerId,
-                        product.partner.partnerName,
                                 JPAExpressions.select(review.rating.avg().coalesce(0.0))
                                         .from(review)
                                         .where(review.product.id.eq(product.id)),
@@ -120,8 +118,6 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                         product.productUrl,
                         product.name,
                         product.price,
-                        product.partner.partnerId,
-                        product.partner.partnerName,
                                 JPAExpressions.select(review.rating.avg().coalesce(0.0))
                                         .from(review)
                                         .where(review.product.id.eq(product.id)),
@@ -136,9 +132,8 @@ public class CustomProductRepositoryImpl implements CustomProductRepository {
                 .groupBy(product.id,
                         product.productUrl,
                         product.name,
-                        product.price,
-                        product.partner.partnerId,
-                        product.partner.partnerName)
+                        product.price
+                )
                 .orderBy(orderProduct.quantity.sum().desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

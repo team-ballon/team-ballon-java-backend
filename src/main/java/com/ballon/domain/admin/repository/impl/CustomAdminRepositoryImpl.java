@@ -59,8 +59,6 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
             countQuery.where(baseFilter);
         }
 
-        log.info("countQuery: {}", countQuery);
-
         Long total = countQuery.fetchOne();
         if (total == null || total == 0) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -85,8 +83,6 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize());
 
-        log.info("idsQuery: {}", idsQuery);
-
         List<Long> ids = idsQuery.fetch();
         if (ids.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, total);
@@ -107,8 +103,6 @@ public class CustomAdminRepositoryImpl implements CustomAdminRepository {
                     .leftJoin(adminPermission.permission).fetchJoin()
                     .where(admin.adminId.in(ids));
         }
-
-        log.info("contentQuery: {}", contentQuery);
 
         List<Admin> admins = contentQuery.fetch();
 
