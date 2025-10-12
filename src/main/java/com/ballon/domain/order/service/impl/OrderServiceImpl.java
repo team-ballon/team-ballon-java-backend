@@ -84,8 +84,8 @@ public class OrderServiceImpl implements OrderService {
 
                 coupon = couponProduct.getCoupon();
                 discountAmount = coupon.getType().equals(Type.PERCENT)
-                        ? unitPrice * coupon.getDiscount() / 100
-                        : coupon.getDiscount();
+                        ? unitPrice * coupon.getDiscountValue() / 100
+                        : coupon.getDiscountValue();
             }
 
             // 최종 결제금액

@@ -2,23 +2,19 @@ package com.ballon.global.common.handler;
 
 import com.ballon.global.common.exception.BaseException;
 import com.ballon.global.common.response.ErrorResponse;
-import com.ballon.global.common.response.Meta;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
 /**
  * 전역 예외 처리 클래스.
  * 컨트롤러에서 발생하는 예외를 공통 형식의 JSON 응답으로 변환하여 반환한다.
+ *
+ * 에러 응답 JSON 로깅은 GlobalResponseWrapper에서 처리됩니다.
  */
 @Slf4j
 @RestControllerAdvice
@@ -34,7 +30,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ErrorResponse> handleValidationExceptions(Exception ex) {
-        log.error("ValidationException handled: {}", ex.getMessage(), ex);
+        log.error("ValidationException: {}", ex.getMessage());
 
         ErrorResponse errorResponse = new ErrorResponse("VALIDATION_ERROR", "입력 데이터에 오류가 있습니다.", HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
 
@@ -51,7 +47,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException ex) {
-        log.error("BaseException handled: {}", ex.getMessage(), ex);
+        log.error("BaseException [{}]: {}", ex.getCode(), ex.getMessage());
 
         ErrorResponse errorResponse = new ErrorResponse(ex.getCode(), ex.getDetails(), ex.getStatus().value(), ex.getMessage());
 
@@ -68,7 +64,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknownException(Exception ex) {
-        log.error("Unhandled exception occurred: {}", ex.getMessage(), ex); // 에러 레벨로 로그 기록
+        log.error("UnhandledException: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
 

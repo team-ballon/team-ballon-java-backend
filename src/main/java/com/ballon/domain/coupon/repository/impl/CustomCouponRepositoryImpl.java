@@ -33,7 +33,7 @@ public class CustomCouponRepositoryImpl implements CustomCouponRepository {
                         coupon.couponId,
                         coupon.couponName,
                         coupon.type,
-                        coupon.discount,
+                        coupon.discountValue,
                         partner.partnerName))
                 .from(coupon)
                 .join(coupon.partner, partner)

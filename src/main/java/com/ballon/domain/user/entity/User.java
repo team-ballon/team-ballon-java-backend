@@ -6,10 +6,13 @@ import com.ballon.domain.user.entity.type.Role;
 import com.ballon.domain.user.entity.type.Sex;
 import com.ballon.domain.user.entity.type.converter.RoleConverter;
 import com.ballon.domain.user.entity.type.converter.SexConverter;
+import com.ballon.domain.wishlist.entity.Wishlist;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "\"user\"")
@@ -48,6 +51,9 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime createdAt; // 가입 일자
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Wishlist> wishlists = new HashSet<>();
 
     public static User createUser(UserRegisterRequest userRegisterRequest, Role role) {
         return User.builder()

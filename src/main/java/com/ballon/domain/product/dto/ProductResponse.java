@@ -22,4 +22,21 @@ public class ProductResponse {
     private String partnerName;
     private List<CouponResponse> coupons;
     private List<String> detailImageLinks;
+
+    @Override
+    public String toString() {
+        return "ProductResponse{" +
+                "coupons=" + coupons +
+                ", partnerName='" + partnerName + '\'' +
+                ", partnerId=" + partnerId +
+                ", categoryName='" + categoryName + '\'' +
+                ", categoryId=" + categoryId +
+                ", createdAt=" + createdAt +
+                ", productQuantity=" + productQuantity +
+                ", productPrice=" + productPrice +
+                ", productName='" + productName + '\'' +
+                ", productId=" + productId +
+                ", detailImageLinks count=" + detailImageLinks.size() +
+                '}';
+    }
 }

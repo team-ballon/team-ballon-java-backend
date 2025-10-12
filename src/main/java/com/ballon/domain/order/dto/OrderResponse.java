@@ -2,9 +2,11 @@ package com.ballon.domain.order.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class OrderResponse {
     Long orderId;
     int amount;

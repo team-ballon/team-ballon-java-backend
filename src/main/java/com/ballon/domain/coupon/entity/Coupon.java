@@ -24,7 +24,7 @@ public class Coupon {
     @Enumerated(EnumType.STRING)
     private Type type;
 
-    private Integer discount;
+    private Integer discountValue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)

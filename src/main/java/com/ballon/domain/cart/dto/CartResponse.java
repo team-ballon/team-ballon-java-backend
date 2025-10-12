@@ -8,6 +8,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @Builder
 public class CartResponse {
     private Long cartId;
@@ -19,6 +20,7 @@ public class CartResponse {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @ToString
     @Builder
     public static class Product {
         private Long cartProductId;

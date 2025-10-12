@@ -20,6 +20,9 @@ import com.ballon.domain.partner.service.PartnerService;
 import com.ballon.domain.product.dto.ProductApplicationSearchRequest;
 import com.ballon.domain.product.dto.ProductApplicationSearchResponse;
 import com.ballon.domain.product.service.ProductApplicationService;
+import com.ballon.domain.report.dto.AiReportResponse;
+import com.ballon.domain.report.entity.type.AiReportType;
+import com.ballon.domain.report.service.AiReportService;
 import com.ballon.domain.settlement.dto.SettlementSearchRequest;
 import com.ballon.domain.settlement.dto.SettlementSearchResponse;
 import com.ballon.domain.settlement.service.SettlementService;
@@ -40,6 +43,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -50,6 +54,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
@@ -63,6 +68,7 @@ public class AdminController {
     private final EventService eventService;
     private final ProductApplicationService productApplicationService;
     private final SettlementService settlementService;
+    private final AiReportService aiReportService;
 
     @Operation(
             summary = "관리자 본인 정보 조회",
@@ -391,5 +397,19 @@ public class AdminController {
     @GetMapping("/settlement")
     public Page<SettlementSearchResponse> searchSettlement(SettlementSearchRequest request, Pageable pageable) {
         return settlementService.searchSettlements(request, pageable);
+    }
+
+    @Operation(
+            summary = "AI 리포트 조회",
+            description = "AI 리포트를 타입에 따라 조회합니다. 관리자가 사용합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "AI 리포트 조회 성공",
+                    content = @Content(schema = @Schema(implementation = AiReportResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @GetMapping("/ai-report")
+    public AiReportResponse getAiReportResponseByAiReportType(@RequestParam("ai_report_type") String aiReportType) {
+        return aiReportService.getAiReportResponseByAiReportType(AiReportType.fromValue(aiReportType));
     }
 }

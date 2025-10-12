@@ -17,4 +17,16 @@ public class OrderSummaryResponse {
     private int paidAmount;
     private int quantity;
     private LocalDateTime createdAt;
+
+    @Override
+    public String toString() {
+        return "OrderSummaryResponse{" +
+                "createdAt=" + createdAt +
+                ", quantity=" + quantity +
+                ", paidAmount=" + paidAmount +
+                ", productName='" + productName + '\'' +
+                ", productId=" + productId +
+                ", orderProductId=" + orderProductId +
+                '}';
+    }
 }
