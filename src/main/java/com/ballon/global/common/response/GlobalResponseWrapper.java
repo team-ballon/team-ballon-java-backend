@@ -60,6 +60,12 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
             return body; // 이미 래핑된 경우 중복 래핑 방지
         }
 
+        if (body instanceof ErrorResponse) {
+            // ErrorResponse는 이미 표준 형식이므로 래핑하지 않음
+            logErrorResponse((ErrorResponse) body);
+            return body;
+        }
+
         if (body instanceof byte[] || MediaType.APPLICATION_OCTET_STREAM.equals(selectedContentType)) {
             return body;
         }
@@ -83,6 +89,21 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
         }
 
         return commonResponse;
+    }
+
+    /**
+     * ErrorResponse 로깅 헬퍼 메서드
+     */
+    private void logErrorResponse(ErrorResponse errorResponse) {
+        if (log.isDebugEnabled()) {
+            try {
+                String jsonLog = objectMapper.writeValueAsString(errorResponse);
+                log.debug("\n[API Error Response]\n{}", jsonLog);
+            } catch (Exception e) {
+                log.debug("Error response - code: {}, status: {}",
+                        errorResponse.getCode(), errorResponse.getStatus());
+            }
+        }
     }
 }
 
