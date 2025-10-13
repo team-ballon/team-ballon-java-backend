@@ -50,6 +50,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         String clientIp = getClientIp(request);
         String queryString = request.getQueryString();
 
+        log.warn("[Auth Fail] Client IP: {} - {}", clientIp, authException.getMessage());
+
         log.warn("""
         [Auth Fail]
         - Time: {}

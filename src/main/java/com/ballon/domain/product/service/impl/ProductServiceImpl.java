@@ -26,7 +26,7 @@ import java.util.Objects;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
@@ -35,7 +35,6 @@ public class ProductServiceImpl implements ProductService {
     private final CouponRepository couponRepository;
     private final ImageLinkRepository imageLinkRepository;
 
-    @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> searchProduct(ProductSearchRequest req, Pageable pageable) {
         log.debug("상품 검색 요청: categoryId={}, keyword={}, page={}", req.getCategoryId(), req.getName(), pageable);
@@ -55,10 +54,10 @@ public class ProductServiceImpl implements ProductService {
 
         Page<ProductSearchResponse> result = productRepository.search(req, categoryIds, pageable);
         log.info("상품 검색 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+
         return result;
     }
 
-    @Transactional(readOnly = true)
     @Override
     public ProductResponse getProduct(Long productId) {
         log.debug("상품 상세 조회 요청: productId={}", productId);
@@ -69,22 +68,7 @@ public class ProductServiceImpl implements ProductService {
         List<String> imageLinks = imageLinkRepository.findLinksByProductId(productId);
         log.debug("상품 이미지 조회 완료: productId={}, 이미지 개수={}", productId, imageLinks.size());
 
-        List<Long> couponIds = couponProductRepository.findCouponIdsByProductId(productId);
-        log.debug("상품 쿠폰 ID 조회 완료: productId={}, couponIds={}", productId, couponIds);
-
-        List<CouponResponse> couponResponses = couponIds.isEmpty()
-                ? List.of()
-                : couponRepository.findAllByIdWithEvent(couponIds).stream()
-                .map(coupon -> new CouponResponse(
-                        coupon.getCouponId(),
-                        coupon.getCouponName(),
-                        coupon.getDiscountValue(),
-                        coupon.getType().toString(),
-                        coupon.getEvent().getStartDate(),
-                        coupon.getEvent().getEndDate()
-                ))
-                .toList();
-
+        List<CouponResponse> couponResponses = couponProductRepository.findCouponsByProductId(productId);
         log.info("상품 상세 조회 완료: productId={}, 쿠폰 개수={}, 이미지 개수={}", productId, couponResponses.size(), imageLinks.size());
 
         return new ProductResponse(
@@ -103,7 +87,6 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-    @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable) {
         log.debug("월간 베스트셀러 조회 요청: categoryId={}, page={}", req.getCategoryId(), pageable);
@@ -123,6 +106,7 @@ public class ProductServiceImpl implements ProductService {
 
         Page<ProductSearchResponse> result = productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
         log.info("월간 베스트셀러 조회 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+
         return result;
     }
 }

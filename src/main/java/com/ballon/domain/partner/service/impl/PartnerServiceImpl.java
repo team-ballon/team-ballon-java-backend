@@ -40,10 +40,9 @@ public class PartnerServiceImpl implements PartnerService {
     @Transactional(readOnly = true)
     @Override
     public PartnerResponse getPartnerByPartnerId(Long partnerId) {
-        log.info("파트너 조회 요청 partnerId: {}", partnerId);
+        log.info("입점업체 조회 요청 partnerId: {}", partnerId);
 
-        Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
+        Partner partner = getPartnerOrThrow(partnerId);
 
         return new PartnerResponse(
                 partner.getUser().getUserId(),
@@ -71,7 +70,7 @@ public class PartnerServiceImpl implements PartnerService {
 
     @Override
     public PartnerResponse partnerRegister(PartnerRegisterRequest partnerRegisterRequest) {
-        log.info("파트너 등록 요청 수신: {}", partnerRegisterRequest);
+        log.info("입점업체 등록 요청 수신: {}", partnerRegisterRequest);
 
         UserRegisterRequest userRegisterRequest = new UserRegisterRequest(
                 partnerRegisterRequest.getEmail(),
@@ -83,7 +82,7 @@ public class PartnerServiceImpl implements PartnerService {
         log.debug("UserRegisterRequest 생성 완료: {}", userRegisterRequest);
 
         UserResponse userResponse = userService.registerUser(userRegisterRequest, Role.PARTNER);
-        log.info("파트너 계정 생성 완료 - userId: {}", userResponse.getUserId());
+        log.info("입점업체 계정 생성 완료 - userId: {}", userResponse.getUserId());
 
         Partner partner = Partner.createPartner(
                 partnerRegisterRequest.getPartnerName(),
@@ -92,7 +91,7 @@ public class PartnerServiceImpl implements PartnerService {
                 userRepository.getReferenceById(userResponse.getUserId())
         );
         partnerRepository.save(partner);
-        log.info("파트너 엔티티 저장 완료 - partnerId: {}, partnerName: {}", partner.getPartnerId(), partner.getPartnerName());
+        log.info("입점업체 엔티티 저장 완료 - partnerId: {}, partnerName: {}", partner.getPartnerId(), partner.getPartnerName());
 
         PartnerResponse response = new PartnerResponse(
                 userResponse.getUserId(),
@@ -104,17 +103,16 @@ public class PartnerServiceImpl implements PartnerService {
                 partner.getCreatedAt(),
                 categoryService.assignPartnerCategory(partnerRegisterRequest.getCategoryIds(), partner)
         );
-        log.info("파트너 등록 처리 완료: {}", response);
+        log.info("입점업체 등록 처리 완료: {}", response);
 
         return response;
     }
 
     @Override
     public PartnerResponse updatePartner(Long partnerId, UpdatePartnerRequest updatePartnerRequest) {
-        log.info("파트너 수정 요청 partnerId: {}", partnerId);
+        log.info("입점업체 수정 요청 partnerId: {}", partnerId);
 
-        Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
+        Partner partner = getPartnerOrThrow(partnerId);
 
         partner.updatePartner(
                 updatePartnerRequest.getName(),
@@ -154,9 +152,13 @@ public class PartnerServiceImpl implements PartnerService {
 
     @Override
     public void activePartnerByPartnerId(Long partnerId, Boolean active) {
-        Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
+        Partner partner = getPartnerOrThrow(partnerId);
 
         partner.updateActive(active);
+    }
+
+    private Partner getPartnerOrThrow(Long partnerId) {
+        return partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 입점업체입니다."));
     }
 }

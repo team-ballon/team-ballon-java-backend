@@ -9,14 +9,18 @@ import com.ballon.domain.partner.entity.Partner;
 import com.ballon.domain.partner.entity.PartnerCategory;
 import com.ballon.domain.partner.repository.PartnerCategoryRepository;
 import com.ballon.global.cache.CategoryCacheStore;
+import com.ballon.global.common.exception.ConflictException;
+import com.ballon.global.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -24,45 +28,62 @@ import java.util.List;
 @Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository repo;
+    private final CategoryRepository categoryRepository;
     private final CategoryCacheStore cache;
     private final PartnerCategoryRepository partnerCategoryRepository;
 
     @Override
     public CategoryCacheStore.Node createCategory(CreateCategoryRequest createCategoryRequest) {
-        // 부모 카테고리 조회 (parentId가 있으면 참조, 없으면 null)
-        Category parent = (createCategoryRequest.getParentId() != null) ? repo.getReferenceById(createCategoryRequest.getParentId()) : null;
+        Category parent;
+        Long parentCategoryId = createCategoryRequest.getParentId();
 
-        // 새로운 카테고리 엔티티 생성
-        Category c = Category.builder()
+        // 1. 부모 카테고리 존재 여부 검증
+        if(Objects.nonNull(parentCategoryId)) {
+            if(categoryRepository.existsById(parentCategoryId)) {
+                parent = categoryRepository.getReferenceById(parentCategoryId);
+            } else {
+                throw new NotFoundException("존재하지 않는 부모 카테고리입니다.");
+            }
+        } else {
+            parent = null;
+        }
+
+        // 2. 새 카테고리 생성
+        Category category = Category.builder()
                 .name(createCategoryRequest.getName())
                 .parent(parent)
                 .build();
 
         // DB에 저장 후 즉시 flush하여 ID 확보
-        repo.saveAndFlush(c);
+        try {
+            // 3. DB 저장 및 즉시 flush (유니크 제약 검사 포함)
+            categoryRepository.saveAndFlush(category);
+        } catch (DataIntegrityViolationException e) {
+            // 4. 복합 유니크 제약(name, parent_id) 위반 시 명확한 예외 반환
+            throw new ConflictException("이미 존재하는 카테고리입니다: name=" + createCategoryRequest.getName());
+        }
 
         // 트랜잭션 커밋 이후 캐시에 반영
         afterCommit(() -> cache.onCreated(
-                c.getCategoryId(),
-                c.getName(),
-                parent == null ? null : parent.getCategoryId()
+                category.getCategoryId(),
+                category.getName(),
+                parent == null ? null : parentCategoryId
         ));
 
-        log.info("카테고리 생성 완료: id={}, name={}", c.getCategoryId(), c.getName());
+        log.info("카테고리 생성 완료: id={}, name={}", category.getCategoryId(), category.getName());
 
-        return cache.getById(c.getCategoryId());
+        return cache.getById(category.getCategoryId());
     }
 
     @Override
-    public void deleteCategory(Long id) {
-        // 정책: 자식 카테고리까지 함께 삭제 (추가 방어 로직 필요 시 보강 가능)
-        repo.deleteById(id);
+    public void deleteCategory(Long categoryId) {
+        // 존재하지 않을 경우 GlobalExceptionHandler에서 EmptyResultDataAccessException 처리
+        categoryRepository.deleteById(categoryId);
 
         // 트랜잭션 커밋 이후 캐시에서 삭제 처리
-        afterCommit(() -> cache.onDeleted(id));
+        afterCommit(() -> cache.onDeleted(categoryId));
 
-        log.info("카테고리 삭제 완료: id={}", id);
+        log.info("카테고리 삭제 완료: id={}", categoryId);
     }
 
     @Override

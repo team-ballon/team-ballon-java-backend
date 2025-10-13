@@ -27,6 +27,7 @@ public class ProductApplicationServiceImpl implements ProductApplicationService 
         Page<ProductApplicationSearchResponse> result = productApplicationRepository.search(req, pageable);
 
         log.info("상품 신청 검색 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+
         return result;
     }
 }
