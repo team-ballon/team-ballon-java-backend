@@ -76,8 +76,8 @@ public class OrderController {
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     @GetMapping
-    public ResponseEntity<Page<OrderSummaryResponse>> getMyOrders(Pageable pageable) {
-        return ResponseEntity.ok(orderService.getOrdersByUser(UserUtil.getUserId(), pageable));
+    public Page<OrderSummaryResponse> getMyOrders(Pageable pageable) {
+        return orderService.getOrdersByUser(UserUtil.getUserId(), pageable);
     }
 
     @Operation(
