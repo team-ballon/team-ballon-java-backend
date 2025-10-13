@@ -14,74 +14,62 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Component
 public class CategoryCacheStore {
 
-    // ===== 내부 노드 정의 =====
     public static final class Node {
         public final Long id;
         public String name;
         public int depth;
-        public Long parentId;             // null = root
-        public final List<Long> children; // 자식 ID 목록
+        public Long parentId;
+        public final NavigableSet<Long> children; // 자동 정렬 TreeSet
 
-        Node(Long id, String name, int depth, Long parentId) {
+        Node(Long id, String name, int depth, Long parentId, Comparator<Long> comparator) {
             this.id = id;
             this.name = name;
             this.depth = depth;
             this.parentId = parentId;
-            this.children = new ArrayList<>();
-        }
-
-        @Override
-        public String toString() {
-            return "Node{" +
-                    "children size=" + children.size() +
-                    ", parentId=" + parentId +
-                    ", depth=" + depth +
-                    ", name='" + name + '\'' +
-                    ", id=" + id +
-                    '}';
+            this.children = new TreeSet<>(comparator);
         }
     }
 
-    private final Map<Long, Node> byId = new HashMap<>();
-    private final Map<Long, List<Long>> childrenIndex = new HashMap<>(); // parentId → childIds(정렬)
-    private final List<Long> rootIds = new ArrayList<>();
-
+    private Map<Long, Node> byId = new HashMap<>();
+    private Map<Long, NavigableSet<Long>> childrenIndex = new HashMap<>();
+        private NavigableSet<Long> rootIds; // TreeSet으로 자동 정렬
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    // ===== 초기 적재 =====
+    private final Comparator<Long> nameComparator = Comparator.comparing(id -> byId.get(id).name, String.CASE_INSENSITIVE_ORDER);
+
+    // ===== double-buffered loadAll =====
     public void loadAll(List<Category> all) {
+        Map<Long, Node> newById = new HashMap<>();
+        Map<Long, NavigableSet<Long>> newChildrenIndex = new HashMap<>();
+        NavigableSet<Long> newRootIds = new TreeSet<>(Comparator.comparing(id -> {
+            Category c = all.stream().filter(cat -> cat.getCategoryId().equals(id)).findFirst().orElse(null);
+            return (c == null) ? "" : c.getName();
+        }, String.CASE_INSENSITIVE_ORDER));
+
+        // 1) Node 생성
+        for (Category c : all) {
+            Long pid = (c.getParent() == null ? null : c.getParent().getCategoryId());
+            Node n = new Node(c.getCategoryId(), c.getName(), c.getDepth(), pid, nameComparator);
+            newById.put(c.getCategoryId(), n);
+        }
+
+        // 2) children / root 구성
+        for (Node n : newById.values()) {
+            if (n.parentId == null) {
+                newRootIds.add(n.id);
+            } else {
+                newChildrenIndex.computeIfAbsent(n.parentId, k -> new TreeSet<>(nameComparator)).add(n.id);
+                Node parent = newById.get(n.parentId);
+                if (parent != null) parent.children.add(n.id);
+            }
+        }
+
+        // 3) swap (writeLock 최소화)
         lock.writeLock().lock();
         try {
-            byId.clear();
-            childrenIndex.clear();
-            rootIds.clear();
-
-            // 1) 노드 생성
-            for (Category c : all) {
-                Long id = c.getCategoryId();
-                Long pid = (c.getParent() == null ? null : c.getParent().getCategoryId());
-                Node n = new Node(id, c.getName(), c.getDepth(), pid);
-                byId.put(id, n);
-            }
-
-            // 2) children 인덱스/루트 계산
-            for (Node n : byId.values()) {
-                if (n.parentId == null) {
-                    rootIds.add(n.id);
-                } else {
-                    childrenIndex.computeIfAbsent(n.parentId, k -> new ArrayList<>()).add(n.id);
-                    Node parent = byId.get(n.parentId);
-                    if (parent != null) {
-                        parent.children.add(n.id);
-                    }
-                }
-            }
-
-            // 3) 정렬(이름 기준)
-            Comparator<Long> byNameCmp = Comparator.comparing(id -> byId.get(id).name, String.CASE_INSENSITIVE_ORDER);
-            rootIds.sort(byNameCmp);
-            for (List<Long> list : childrenIndex.values()) list.sort(byNameCmp);
-            for (Node node : byId.values()) node.children.sort(byNameCmp);
+            byId = newById;
+            childrenIndex = newChildrenIndex;
+            rootIds = newRootIds;
         } finally {
             lock.writeLock().unlock();
         }
@@ -174,22 +162,15 @@ public class CategoryCacheStore {
         lock.writeLock().lock();
         try {
             int depth = (parentId == null) ? 0 : (byId.get(parentId).depth + 1);
-            Node n = new Node(id, name, depth, parentId);
+            Node n = new Node(id, name, depth, parentId, nameComparator);
             byId.put(id, n);
 
             if (parentId == null) {
-                rootIds.add(id);
-                rootIds.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                rootIds.add(id); // TreeSet이라 자동 정렬
             } else {
-                childrenIndex.computeIfAbsent(parentId, k -> new ArrayList<>()).add(id);
-                childrenIndex.get(parentId)
-                        .sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
-
+                childrenIndex.computeIfAbsent(parentId, k -> new TreeSet<>(nameComparator)).add(id);
                 Node parent = byId.get(parentId);
-                if (parent != null) {
-                    parent.children.add(id);
-                    parent.children.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
-                }
+                if (parent != null) parent.children.add(id); // TreeSet 자동 정렬
             }
         } finally {
             lock.writeLock().unlock();
@@ -204,16 +185,18 @@ public class CategoryCacheStore {
             n.name = newName;
 
             if (n.parentId == null) {
-                rootIds.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                rootIds.remove(id);
+                rootIds.add(id); // TreeSet 재정렬
             } else {
-                List<Long> siblings = childrenIndex.getOrDefault(n.parentId, List.of());
-                if (!siblings.isEmpty()) {
-                    siblings.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                NavigableSet<Long> siblings = childrenIndex.get(n.parentId);
+                if (siblings != null) {
+                    siblings.remove(id);
+                    siblings.add(id);
                 }
-
                 Node parent = byId.get(n.parentId);
-                if (parent != null && !parent.children.isEmpty()) {
-                    parent.children.sort(Comparator.comparing(i -> byId.get(i).name, String.CASE_INSENSITIVE_ORDER));
+                if (parent != null) {
+                    parent.children.remove(id);
+                    parent.children.add(id);
                 }
             }
         } finally {
@@ -227,45 +210,42 @@ public class CategoryCacheStore {
             Node n = byId.get(id);
             if (n == null) return;
 
-            List<Long> toDelete = new ArrayList<>();
+            // 삭제할 노드 + 모든 자손 수집
+            Set<Long> toDelete = new HashSet<>();
             collectDescendants(id, toDelete);
             toDelete.add(id);
 
+            // 부모 참조에서 제거
             if (n.parentId == null) {
                 rootIds.remove(id);
             } else {
-                List<Long> siblings = childrenIndex.get(n.parentId);
+                NavigableSet<Long> siblings = childrenIndex.get(n.parentId);
                 if (siblings != null) siblings.remove(id);
 
                 Node parent = byId.get(n.parentId);
                 if (parent != null) parent.children.remove(id);
             }
 
+            // 자손 포함 전체 삭제
             for (Long delId : toDelete) {
-                byId.remove(delId);
-                List<Long> ch = childrenIndex.remove(delId);
-                if (ch != null) ch.clear();
+                Node delNode = byId.remove(delId);
+                if (delNode != null) {
+                    NavigableSet<Long> ch = childrenIndex.remove(delId);
+                    if (ch != null) ch.clear();
+                }
             }
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    // ===== 내부 유틸 =====
-    private void collectDescendants(Long id, List<Long> acc) {
-        List<Long> ch = childrenIndex.getOrDefault(id, List.of());
+    // TreeSet 기반 자손 수집
+    private void collectDescendants(Long id, Set<Long> acc) {
+        NavigableSet<Long> ch = childrenIndex.getOrDefault(id, new TreeSet<>());
         for (Long cid : ch) {
             acc.add(cid);
             collectDescendants(cid, acc);
         }
     }
 
-    private void propagateDepth(Long id, int delta) {
-        Node n = byId.get(id);
-        if (n == null || delta == 0) return;
-        n.depth += delta;
-        for (Long cid : childrenIndex.getOrDefault(id, List.of())) {
-            propagateDepth(cid, delta);
-        }
-    }
 }

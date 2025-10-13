@@ -68,22 +68,7 @@ public class ProductServiceImpl implements ProductService {
         List<String> imageLinks = imageLinkRepository.findLinksByProductId(productId);
         log.debug("상품 이미지 조회 완료: productId={}, 이미지 개수={}", productId, imageLinks.size());
 
-        List<Long> couponIds = couponProductRepository.findCouponIdsByProductId(productId);
-        log.debug("상품 쿠폰 ID 조회 완료: productId={}, couponIds={}", productId, couponIds);
-
-        List<CouponResponse> couponResponses = couponIds.isEmpty()
-                ? List.of()
-                : couponRepository.findAllByIdWithEvent(couponIds).stream()
-                .map(coupon -> new CouponResponse(
-                        coupon.getCouponId(),
-                        coupon.getCouponName(),
-                        coupon.getDiscountValue(),
-                        coupon.getType().toString(),
-                        coupon.getEvent().getStartDate(),
-                        coupon.getEvent().getEndDate()
-                ))
-                .toList();
-
+        List<CouponResponse> couponResponses = couponProductRepository.findCouponsByProductId(productId);
         log.info("상품 상세 조회 완료: productId={}, 쿠폰 개수={}, 이미지 개수={}", productId, couponResponses.size(), imageLinks.size());
 
         return new ProductResponse(
