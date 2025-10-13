@@ -30,26 +30,28 @@ public class CategoryCacheStore {
         }
     }
 
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Map<Long, Node> byId = new HashMap<>();
     private Map<Long, NavigableSet<Long>> childrenIndex = new HashMap<>();
-        private NavigableSet<Long> rootIds; // TreeSet으로 자동 정렬
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private final Comparator<Long> nameComparator = Comparator.comparing(id -> byId.get(id).name, String.CASE_INSENSITIVE_ORDER);
+    private NavigableSet<Long> rootIds; // TreeSet으로 자동 정렬
+    private Comparator<Long> nameComparator;
 
     // ===== double-buffered loadAll =====
     public void loadAll(List<Category> all) {
-        Map<Long, Node> newById = new HashMap<>();
-        Map<Long, NavigableSet<Long>> newChildrenIndex = new HashMap<>();
-        NavigableSet<Long> newRootIds = new TreeSet<>(Comparator.comparing(id -> {
+        // loadAll용 Comparator 한 번만 생성
+        Comparator<Long> loadComparator = Comparator.comparing(id -> {
             Category c = all.stream().filter(cat -> cat.getCategoryId().equals(id)).findFirst().orElse(null);
             return (c == null) ? "" : c.getName();
-        }, String.CASE_INSENSITIVE_ORDER));
+        }, String.CASE_INSENSITIVE_ORDER);
+
+        Map<Long, Node> newById = new HashMap<>();
+        Map<Long, NavigableSet<Long>> newChildrenIndex = new HashMap<>();
+        NavigableSet<Long> newRootIds = new TreeSet<>(loadComparator);
 
         // 1) Node 생성
         for (Category c : all) {
             Long pid = (c.getParent() == null ? null : c.getParent().getCategoryId());
-            Node n = new Node(c.getCategoryId(), c.getName(), c.getDepth(), pid, nameComparator);
+            Node n = new Node(c.getCategoryId(), c.getName(), c.getDepth(), pid, loadComparator);
             newById.put(c.getCategoryId(), n);
         }
 
@@ -58,7 +60,7 @@ public class CategoryCacheStore {
             if (n.parentId == null) {
                 newRootIds.add(n.id);
             } else {
-                newChildrenIndex.computeIfAbsent(n.parentId, k -> new TreeSet<>(nameComparator)).add(n.id);
+                newChildrenIndex.computeIfAbsent(n.parentId, k -> new TreeSet<>(loadComparator)).add(n.id);
                 Node parent = newById.get(n.parentId);
                 if (parent != null) parent.children.add(n.id);
             }
@@ -70,6 +72,8 @@ public class CategoryCacheStore {
             byId = newById;
             childrenIndex = newChildrenIndex;
             rootIds = newRootIds;
+
+            nameComparator = loadComparator; // 전역 필드에 할당
         } finally {
             lock.writeLock().unlock();
         }
