@@ -57,10 +57,6 @@ public class WishlistServiceImpl implements WishlistService {
 
         log.info("removeWishlist 호출 - userId: {}, productId: {}", userId, productId);
 
-        if(!wishlistRepository.existsById(wishlistId)) {
-            throw new NotFoundException("존재하지 않는 wishlist 입니다.");
-        }
-
         wishlistRepository.deleteById(wishlistId);
         log.info("wishlist 삭제 성공 - userId: {}, productId: {}", userId, productId);
     }

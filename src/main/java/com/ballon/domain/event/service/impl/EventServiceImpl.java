@@ -33,6 +33,7 @@ public class EventServiceImpl implements EventService {
         Page<EventSearchResponse> result = eventRepository.searchEvents(request, pageable);
 
         log.debug("이벤트 검색 결과: 총 {}건, 총 페이지 {}", result.getTotalElements(), result.getTotalPages());
+
         return result;
     }
 
@@ -64,7 +65,9 @@ public class EventServiceImpl implements EventService {
     public EventResponse createEvent(EventRequest eventRequest) {
         log.info("이벤트 생성 요청: {}", eventRequest);
         Event event = Event.createEvent(eventRequest);
+
         eventRepository.save(event);
+
         log.info("이벤트 생성 완료: eventId={}", event.getEventId());
 
         return new EventResponse(
@@ -102,18 +105,14 @@ public class EventServiceImpl implements EventService {
     @Override
     public void deleteEvent(Long eventId) {
         log.info("이벤트 삭제 요청: eventId={}", eventId);
-        if (!eventRepository.existsById(eventId)) {
-            throw new NotFoundException("존재하지 않는 이벤트입니다.");
-        }
-
         eventRepository.deleteById(eventId);
+
         log.info("이벤트 삭제 완료: eventId={}", eventId);
     }
 
     @Override
     public Page<EventApplicationResponse> searchEventApplications(EventSearchApplicationRequest request, Pageable pageable) {
         log.info("이벤트 신청 내역 조회 시작: 요청조건={}, 페이지정보={}", request, pageable);
-
         Page<EventApplicationResponse> responses = eventApplicationRepository.searchApplications(request, pageable);
 
         log.info("이벤트 신청 내역 조회 완료: 총 {}건, 현재페이지={}, 페이지크기={}",
@@ -131,6 +130,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 이벤트 신청입니다."));
 
         eventApplication.updateStatus(eventStatus);
+
         log.info("이벤트 신청 상태 수정 완료: eventApplicationId={}", eventApplicationId);
     }
 }

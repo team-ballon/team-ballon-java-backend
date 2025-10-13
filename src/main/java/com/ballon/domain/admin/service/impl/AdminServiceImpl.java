@@ -42,8 +42,7 @@ public class AdminServiceImpl implements AdminService {
     public AdminResponse getAdminByAdminId(Long adminId) {
         log.info("getAdminByAdminId 호출 - adminId: {}", adminId);
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
+        Admin admin = getAdminOrThrow(adminId);
 
         AdminResponse response = new AdminResponse(
                 admin.getAdminId(),
@@ -106,8 +105,7 @@ public class AdminServiceImpl implements AdminService {
     public AdminResponse updateAdmin(Long adminId, AdminUpdateRequest adminUpdateRequest) {
         log.info("updateAdmin 호출 - adminId: {}, 요청: {}", adminId, adminUpdateRequest);
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
+        Admin admin = getAdminOrThrow(adminId);
 
         admin.updateRole(adminUpdateRequest.getRoleName());
         log.debug("관리자 역할 업데이트 완료 - adminId: {}, role: {}", adminId, adminUpdateRequest.getRoleName());
@@ -150,12 +148,16 @@ public class AdminServiceImpl implements AdminService {
     public void removeAdminByAdminId(Long adminId) {
         log.info("removeAdminByAdminId 호출 - adminId: {}", adminId);
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
+        Admin admin = getAdminOrThrow(adminId);
 
         adminRepository.delete(admin);
         userRepository.deleteById(admin.getUser().getUserId());
 
         log.info("관리자 및 유저 삭제 완료 - adminId: {}, userId: {}", adminId, admin.getUser().getUserId());
+    }
+
+    private Admin getAdminOrThrow(Long adminId) {
+        return adminRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 관리자."));
     }
 }

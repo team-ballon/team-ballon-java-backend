@@ -36,8 +36,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Page<ReviewResponse> getReviews(Long productId, String sort, Pageable pageable) {
         log.debug("리뷰 조회 요청: productId={}, sort={}, page={}", productId, sort, pageable);
+
         Page<ReviewResponse> result = reviewRepository.searchReviews(productId, sort, pageable);
+
         log.info("리뷰 조회 완료: productId={}, 총 건수={}", productId, result.getTotalElements());
+
         return result;
     }
 
@@ -48,9 +51,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         User user = userRepository.getReferenceById(userId);
 
-        if (!orderProductRepository.existsPurchasedProductByUser(userId, productId)) {
-            throw new ForbiddenException("구매 이력이 없는 상품에는 리뷰를 작성할 수 없습니다.");
-        }
+        validateUserPurchaseOrThrow(userId, productId);
 
         if (!productRepository.existsById(productId)) {
             throw new NotFoundException("존재하지 않는 상품입니다.");
@@ -83,6 +84,8 @@ public class ReviewServiceImpl implements ReviewService {
         Long userId = UserUtil.getUserId();
         log.debug("리뷰 수정 요청: userId={}, productId={}, rating={}", userId, productId, reviewRequest.getRating());
 
+        validateUserPurchaseOrThrow(userId, productId);
+
         ReviewId reviewId = new ReviewId(productId, userId);
 
         Review review = reviewRepository.findById(reviewId)
@@ -106,12 +109,17 @@ public class ReviewServiceImpl implements ReviewService {
         Long userId = UserUtil.getUserId();
         log.debug("리뷰 삭제 요청: userId={}, productId={}", userId, productId);
 
+        validateUserPurchaseOrThrow(userId, productId);
+
         ReviewId reviewId = new ReviewId(productId, userId);
 
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않습니다."));
-
-        reviewRepository.delete(review);
+        reviewRepository.deleteById(reviewId);
         log.info("리뷰 삭제 성공: userId={}, productId={}", userId, productId);
+    }
+
+    private void validateUserPurchaseOrThrow(Long userId, Long productId) {
+        if (!orderProductRepository.existsPurchasedProductByUser(userId, productId)) {
+            throw new ForbiddenException("구매 이력이 없는 상품에는 리뷰를 작성할 수 없습니다.");
+        }
     }
 }

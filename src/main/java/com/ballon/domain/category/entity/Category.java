@@ -3,6 +3,9 @@ package com.ballon.domain.category.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "category")
 @Getter
@@ -26,6 +29,9 @@ public class Category {
     @JoinColumn(name = "parent_id",
             foreignKey = @ForeignKey(name = "fk_category_parent"))
     private Category parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> children = new ArrayList<>();
 
     @PrePersist
     private void prePersist() {

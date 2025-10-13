@@ -26,7 +26,7 @@ import java.util.Objects;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
@@ -35,7 +35,6 @@ public class ProductServiceImpl implements ProductService {
     private final CouponRepository couponRepository;
     private final ImageLinkRepository imageLinkRepository;
 
-    @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> searchProduct(ProductSearchRequest req, Pageable pageable) {
         log.debug("상품 검색 요청: categoryId={}, keyword={}, page={}", req.getCategoryId(), req.getName(), pageable);
@@ -55,10 +54,10 @@ public class ProductServiceImpl implements ProductService {
 
         Page<ProductSearchResponse> result = productRepository.search(req, categoryIds, pageable);
         log.info("상품 검색 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+
         return result;
     }
 
-    @Transactional(readOnly = true)
     @Override
     public ProductResponse getProduct(Long productId) {
         log.debug("상품 상세 조회 요청: productId={}", productId);
@@ -103,7 +102,6 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-    @Transactional(readOnly = true)
     @Override
     public Page<ProductSearchResponse> findMonthlyBestSellers(ProductBestRequest req, Pageable pageable) {
         log.debug("월간 베스트셀러 조회 요청: categoryId={}, page={}", req.getCategoryId(), pageable);
@@ -123,6 +121,7 @@ public class ProductServiceImpl implements ProductService {
 
         Page<ProductSearchResponse> result = productRepository.findMonthlyBestSellers(req, categoryIds, pageable);
         log.info("월간 베스트셀러 조회 완료: 조회 건수={}, pageNumber={}", result.getTotalElements(), pageable.getPageNumber());
+
         return result;
     }
 }

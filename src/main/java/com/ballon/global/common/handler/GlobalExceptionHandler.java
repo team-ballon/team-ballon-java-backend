@@ -3,6 +3,7 @@ package com.ballon.global.common.handler;
 import com.ballon.global.common.exception.BaseException;
 import com.ballon.global.common.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -19,6 +20,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(EmptyResultDataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(EmptyResultDataAccessException ex) {
+        // 로그 남기고 사용자에게는 메시지만 전달
+        log.error("NotFoundException: {}", ex.getMessage());
+        ErrorResponse response = new ErrorResponse("NOT_FOUND", "삭제할 데이터가 존재하지 않습니다.", HttpStatus.NOT_FOUND.value());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
 
     /**
      * 유효성 검사 실패 시 발생하는 예외 처리.
