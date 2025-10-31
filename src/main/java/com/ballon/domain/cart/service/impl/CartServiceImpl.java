@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// TODO: QueryDSL 사용 예정
 @Slf4j
 @Service
 @RequiredArgsConstructor

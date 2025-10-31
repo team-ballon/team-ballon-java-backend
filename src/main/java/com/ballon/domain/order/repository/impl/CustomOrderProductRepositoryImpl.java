@@ -1,7 +1,6 @@
 package com.ballon.domain.order.repository.impl;
 
 import com.ballon.domain.order.dto.OrderSummaryResponse;
-import com.ballon.domain.order.entity.OrderProduct;
 import com.ballon.domain.order.entity.QOrder;
 import com.ballon.domain.order.entity.QOrderProduct;
 import com.ballon.domain.order.entity.type.OrderStatus;

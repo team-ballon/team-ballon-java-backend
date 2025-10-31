@@ -95,11 +95,11 @@ public class AdminController {
     })
     @CheckSuperAdmin
     @GetMapping("/search")
-    public ResponseEntity<Page<AdminResponse>> searchAdmins(
+    public Page<AdminResponse> searchAdmins(
             @Parameter(description = "검색 조건") AdminSearchRequest adminSearchRequest,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(adminService.searchAdmins(adminSearchRequest, pageable));
+        return adminService.searchAdmins(adminSearchRequest, pageable);
     }
 
 
