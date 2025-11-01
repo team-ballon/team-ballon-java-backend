@@ -37,12 +37,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        // 요청 URI와 인증 실패 원인을 로그로 출력
-        /*String requestURI = request.getRequestURI();
-        String authHeader = request.getHeader("Authorization");
-        log.info("[Auth Fail] 요청 URI: {}, Authorization 헤더: {} -\n예외 메시지: {}", requestURI, authHeader, authException.getMessage());
-        */
-
         String requestURI = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
         String method = request.getMethod();
